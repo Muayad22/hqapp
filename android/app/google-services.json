@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "1038385247138",
+    "firebase_url": "https://hqapp-ac99d-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "hqapp-ac99d",
+    "storage_bucket": "hqapp-ac99d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1038385247138:android:f3d1c49c435e48318d38fb",
+        "android_client_info": {
+          "package_name": "com.example.hqapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDUKhngELCQw8FQSMuIQ00d-LZp9oeAigQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
