@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
-import 'package:hqapp/screens/register_screen.dart';
+import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class AchievementsScreen extends StatefulWidget {
   final UserProfile user;
@@ -178,7 +177,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             'Achievements',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
           elevation: 2,
           centerTitle: true,
@@ -199,7 +198,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'You need to login to access achievements and track your progress!',
+                  'You need to login to access the achievement page.',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
@@ -208,11 +207,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   onPressed: () {
                     if (!mounted) return;
                     Navigator.of(context, rootNavigator: true).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-                  icon: const Icon(Icons.person_add),
-                  label: const Text('Create Account'),
+                  icon: const Icon(Icons.login),
+                  label: const Text('Login'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -234,7 +233,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             'Achievements',
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
           elevation: 2,
           centerTitle: true,
@@ -246,7 +245,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Achievements'),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         actions: [
           IconButton(
@@ -332,13 +331,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
             // Achievements Grid
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 0, 16.0, 16.0),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.8,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  childAspectRatio: 0.85,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
                 delegate: SliverChildBuilderDelegate((context, index) {
                   final achievement = _achievements[index];
@@ -398,14 +397,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               : null,
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Icon
               Container(
-                width: 60,
-                height: 60,
+                width: 50,
+                height: 50,
                 decoration: BoxDecoration(
                   color: isUnlocked
                       ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
@@ -416,44 +416,48 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   child: Text(
                     achievement['icon'],
                     style: TextStyle(
-                      fontSize: 30,
+                      fontSize: 26,
                       color: isUnlocked ? null : Colors.grey[400],
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
               // Title
-              Text(
-                achievement['title'],
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: isUnlocked ? null : Colors.grey[400],
+              Flexible(
+                child: Text(
+                  achievement['title'],
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: isUnlocked ? null : Colors.grey[400],
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
 
               // Description
-              Text(
-                achievement['description'],
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isUnlocked ? Colors.grey[600] : Colors.grey[400],
+              Flexible(
+                child: Text(
+                  achievement['description'],
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: isUnlocked ? Colors.grey[600] : Colors.grey[400],
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
 
               // Points
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
                   color: isUnlocked
                       ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
@@ -463,7 +467,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 child: Text(
                   '${achievement['points']} pts',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 9,
                     fontWeight: FontWeight.bold,
                     color: isUnlocked
                         ? Theme.of(context).colorScheme.primary
@@ -471,12 +475,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 4),
 
               // Status
               if (isUnlocked)
-                const Icon(Icons.check_circle, color: Colors.green, size: 20)
+                const Icon(Icons.check_circle, color: Colors.green, size: 18)
               else
-                Icon(Icons.lock, color: Colors.grey[400], size: 16),
+                Icon(Icons.lock, color: Colors.grey[400], size: 14),
             ],
           ),
         ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
-import 'package:hqapp/theme/app_theme.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   const MapTrackingScreen({super.key});
@@ -14,13 +13,13 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text(
           'Map',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -82,12 +81,12 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: const Color(0xFF6B4423).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -158,7 +157,7 @@ class _QrCodeState extends State<QrCode> {
           'QR Scanner',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -170,18 +169,19 @@ class _QrCodeState extends State<QrCode> {
             child: QRView(key: qrKey, onQRViewCreated: _onQRViewCreated),
           ),
           Expanded(
-            child: Center(
-              child: (!screenOpen)
-                  ? null
-                  : _buildGradientButton(
-                      onPressed: () {
-                        setState(() {
-                          screenOpen = false;
-                        });
-                        controller?.resumeCamera();
-                      },
-                      text: "Scan again!",
-                    ),
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Center(
+                child: _buildGradientButton(
+                  onPressed: () {
+                    setState(() {
+                      screenOpen = false;
+                    });
+                    controller?.resumeCamera();
+                  },
+                  text: "Scan Again",
+                ),
+              ),
             ),
           ),
         ],
@@ -213,12 +213,12 @@ class _QrCodeState extends State<QrCode> {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: const Color(0xFF6B4423).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -259,13 +259,13 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text(
           'Your Location',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -307,7 +307,55 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                   ),
                 ),
               ),
+              const SizedBox(height: 40),
+              _buildGradientButton(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const QrCode()),
+                  );
+                },
+                text: "Scan Again",
+              ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientButton({required String text, VoidCallback? onPressed}) {
+    return Container(
+      height: 56,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6B4423).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),

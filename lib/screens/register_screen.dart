@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:hqapp/constants/app_text.dart';
 import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -81,9 +79,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.secondaryColor.withOpacity(0.05),
-              AppTheme.accentColor.withOpacity(0.1),
+              const Color(0xFF6B4423).withOpacity(0.1),
+              const Color(0xFF8B4513).withOpacity(0.05),
+              const Color(0xFFB8860B).withOpacity(0.1),
             ],
           ),
         ),
@@ -116,8 +114,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.secondaryColor,
+                                const Color(0xFF6B4423),
+                                const Color(0xFF8B4513),
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -134,7 +132,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -188,7 +186,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _emailController,
-                    labelText: AppText.email,
+                    labelText: 'Email',
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
@@ -216,7 +214,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _passwordController,
-                    labelText: AppText.password,
+                    labelText: 'Password',
                     icon: Icons.lock_outline,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
@@ -293,9 +291,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TextButton(
                         onPressed: _goToLogin,
                         child: Text(
-                          AppText.login,
+                          'Login',
                           style: const TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -341,7 +339,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         decoration: InputDecoration(
           labelText: labelText,
           labelStyle: TextStyle(color: Colors.grey[700]),
-          prefixIcon: Icon(icon, color: AppTheme.primaryColor),
+          prefixIcon: Icon(icon, color: const Color(0xFF6B4423)),
           suffixIcon: suffixIcon,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
@@ -364,12 +362,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: const Color(0xFF6B4423).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -415,7 +413,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.public, color: AppTheme.primaryColor, size: 20),
+              Icon(Icons.public, color: const Color(0xFF6B4423), size: 20),
               const SizedBox(width: 8),
               Text(
                 'Visitor Type',
@@ -437,7 +435,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   icon: Icons.home,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: _buildRadioOption(
                   value: 'Foreign',
@@ -466,19 +464,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       },
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppTheme.primaryColor.withOpacity(0.1)
+              ? const Color(0xFF6B4423).withOpacity(0.1)
               : Colors.grey[50],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? AppTheme.primaryColor : Colors.grey[300]!,
+            color: isSelected ? const Color(0xFF6B4423) : Colors.grey[300]!,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Radio<String>(
               value: value,
@@ -490,23 +488,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   });
                 }
               },
-              activeColor: AppTheme.primaryColor,
+              activeColor: const Color(0xFF6B4423),
             ),
             Icon(
               icon,
-              size: 20,
-              color: isSelected ? AppTheme.primaryColor : Colors.grey[600],
+              size: 18,
+              color: isSelected ? const Color(0xFF6B4423) : Colors.grey[600],
             ),
-            const SizedBox(width: 8),
-            Flexible(
+            const SizedBox(width: 6),
+            Expanded(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppTheme.primaryColor : Colors.grey[700],
+                  color: isSelected
+                      ? const Color(0xFF6B4423)
+                      : Colors.grey[700],
                 ),
-                textAlign: TextAlign.center,
+                softWrap: true,
+                maxLines: 2,
+                overflow: TextOverflow.visible,
+                textAlign: TextAlign.left,
               ),
             ),
           ],

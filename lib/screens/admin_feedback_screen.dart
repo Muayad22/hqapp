@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class AdminFeedbackScreen extends StatefulWidget {
   const AdminFeedbackScreen({super.key});
@@ -19,7 +18,7 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
           'Feedback',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -36,67 +35,119 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                   const SizedBox(height: 16),
                   Text(
                     'Error loading feedback',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     snapshot.error.toString(),
-                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                     textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => setState(() {}),
-                    child: const Text('Retry'),
+                    style: TextStyle(color: Colors.grey[600]),
                   ),
                 ],
               ),
             );
           }
 
-          final feedback = snapshot.data ?? [];
-          if (feedback.isEmpty) {
-            return const Center(child: Text('No feedback yet.'));
+          final feedbackList = snapshot.data ?? [];
+
+          if (feedbackList.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.feedback_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No feedback yet',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Feedback from visitors will appear here',
+                    style: TextStyle(color: Colors.grey[500]),
+                  ),
+                ],
+              ),
+            );
           }
 
-          return ListView.separated(
+          return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: feedback.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemCount: feedbackList.length,
             itemBuilder: (context, index) {
-              final entry = feedback[index];
+              final feedback = feedbackList[index];
               return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                elevation: 2,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            entry.userName,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFF6B4423),
+                            child: Text(
+                              feedback.userName.isNotEmpty
+                                  ? feedback.userName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(color: Colors.white),
+                            ),
                           ),
-                          Text(
-                            entry.createdAt
-                                .toLocal()
-                                .toString()
-                                .split('.')
-                                .first,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 12,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  feedback.userName.isNotEmpty
+                                      ? feedback.userName
+                                      : 'Anonymous',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _formatDate(feedback.createdAt),
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Text(entry.message),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          feedback.message,
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -106,5 +157,26 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
         },
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      if (difference.inHours == 0) {
+        if (difference.inMinutes == 0) {
+          return 'Just now';
+        }
+        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+      }
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
   }
 }

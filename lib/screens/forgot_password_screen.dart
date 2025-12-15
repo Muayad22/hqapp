@@ -1,8 +1,50 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:hqapp/constants/app_text.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'package:email_otp/email_otp.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/services/email_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
+
+// Debug logging helper
+void _debugLog(
+  String location,
+  String message,
+  Map<String, dynamic> data,
+  String hypothesisId,
+) {
+  if (kDebugMode) {
+    try {
+      final logEntry = {
+        'id': 'log_${DateTime.now().millisecondsSinceEpoch}',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'location': location,
+        'message': message,
+        'data': data,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+        'hypothesisId': hypothesisId,
+      };
+      final logPath = r'c:\FlutterApps\hq\.cursor\debug.log';
+      final logFile = File(logPath);
+
+      // Create directory if it doesn't exist
+      final logDir = logFile.parent;
+      if (!logDir.existsSync()) {
+        logDir.createSync(recursive: true);
+      }
+
+      // Write log entry
+      logFile.writeAsStringSync(
+        '${jsonEncode(logEntry)}\n',
+        mode: FileMode.append,
+      );
+    } catch (e) {
+      // Error logging failed silently
+    }
+  }
+}
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -27,6 +69,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   String? _userId;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  EmailOTP? myauth;
 
   @override
   void dispose() {
@@ -38,6 +81,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _sendOTP() async {
+    // #region agent log
+    _debugLog('forgot_password_screen.dart:41', 'Function _sendOTP called', {
+      'email': _emailController.text.trim(),
+    }, 'A');
+    // #endregion
+
     // Clear previous errors first
     setState(() {
       _emailError = null;
@@ -45,6 +94,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     // Validate form - this will trigger validators and show errors
     final isValid = _formKey.currentState!.validate();
+
+    // #region agent log
+    _debugLog('forgot_password_screen.dart:48', 'Form validation result', {
+      'isValid': isValid,
+      'email': _emailController.text.trim(),
+    }, 'A');
+    // #endregion
 
     // If validation fails, manually check and set errors
     if (!isValid) {
@@ -80,59 +136,81 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
 
-    // DESIGN MODE: Skip email sending for design testing
-    // Simulate a delay to show loading state
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    setState(() {
-      _userEmail = _emailController.text.trim();
-      _currentStep = 1; // Move to OTP step
-      _isLoading = false;
-    });
-
-    // Show success message
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'OTP has been sent to ${_emailController.text.trim()}. Please check your email inbox.',
-          ),
-          backgroundColor: AppTheme.successColor,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    }
-
-    /* ORIGINAL CODE - Uncomment when ready to use real email
     try {
-      // Generate and store OTP
-      final otp = await FirestoreService.generateOTPForPasswordReset(
-        email: _emailController.text.trim(),
-      );
+      final email = _emailController.text.trim();
 
-      // Send OTP via email
-      await EmailService.sendOTPEmail(
-        toEmail: _emailController.text.trim(),
-        otp: otp,
-      );
+      // Check if user exists and get userId
+      String userId;
+      try {
+        // This will throw AuthException if email doesn't exist, or return userId
+        userId = await FirestoreService.generateOTPForPasswordReset(
+          email: email,
+        );
+      } on AuthException catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _emailError = e.message;
+          _isLoading = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
+      // Generate and send 4-digit OTP via EmailService
+      // EmailService will generate a 4-digit OTP and send it via email
+      String generatedOtp;
+      try {
+        generatedOtp = await EmailService.sendOTPEmail(toEmail: email, otp: '');
+
+        // Verify the OTP is 4 digits
+        if (generatedOtp.length != 4) {
+          throw Exception('Generated OTP is not 4 digits. Please try again.');
+        }
+
+        if (kDebugMode) {
+          print('OTP email sent successfully to $email');
+        }
+      } catch (emailError) {
+        // If email sending fails, show error
+        if (!mounted) return;
+        setState(() {
+          _emailError = 'Failed to send OTP email. Please try again.';
+          _isLoading = false;
+        });
+        _formKey.currentState!.validate();
+        return;
+      }
+
+      // Store the 4-digit OTP in Firebase (the one that was sent via email)
+      try {
+        await FirestoreService.storeOTPForPasswordReset(
+          email: email,
+          userId: userId,
+          otp: generatedOtp,
+        );
+      } catch (e) {
+        // If storing fails, log but continue (OTP was already sent)
+        if (kDebugMode) {
+          print('Warning: Failed to store OTP in Firebase: $e');
+        }
+      }
 
       if (!mounted) return;
 
+      // Move to next step if OTP was generated and sent successfully
       setState(() {
-        _userEmail = _emailController.text.trim();
+        _userEmail = email;
         _currentStep = 1; // Move to OTP step
         _isLoading = false;
       });
 
-      // Show success message - OTP has been sent via email
+      // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('OTP has been sent to ${_emailController.text.trim()}. Please check your email inbox.'),
-            backgroundColor: AppTheme.successColor,
-            duration: const Duration(seconds: 5),
+          const SnackBar(
+            content: Text('OTP has been sent. Please check your email inbox.'),
+            backgroundColor: Color(0xFF2E7D32),
+            duration: Duration(seconds: 3),
           ),
         );
       }
@@ -140,7 +218,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (!mounted) return;
       // Set error similar to login screen
       final errorMessage = e.message.toLowerCase();
-      if (errorMessage.contains('email') || 
+      if (errorMessage.contains('email') ||
           errorMessage.contains('account') ||
           errorMessage.contains('not found')) {
         setState(() {
@@ -165,7 +243,113 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
       _formKey.currentState!.validate();
     }
-    */
+  }
+
+  Future<void> _resendOTP() async {
+    // Clear previous errors and OTP input
+    setState(() {
+      _otpError = null;
+      _otpController.clear();
+      _isLoading = true;
+    });
+
+    if (_userEmail == null || _userEmail!.isEmpty) {
+      setState(() {
+        _otpError =
+            'Email not found. Please go back and enter your email again.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final email = _userEmail!;
+
+      // #region agent log
+      _debugLog('forgot_password_screen.dart:393', 'Resending OTP', {
+        'email': email,
+      }, 'B');
+      // #endregion
+
+      // Step 1: Verify email exists and get userId
+      String userId;
+      try {
+        userId = await FirestoreService.verifyEmailExists(email);
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _otpError = 'Failed to verify email. Please try again.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Step 2: Generate and send 4-digit OTP via EmailService
+      String generatedOtp;
+      try {
+        generatedOtp = await EmailService.sendOTPEmail(toEmail: email, otp: '');
+
+        // Verify the OTP is 4 digits
+        if (generatedOtp.length != 4) {
+          if (!mounted) return;
+          setState(() {
+            _otpError = 'Failed to generate OTP. Please try again.';
+            _isLoading = false;
+          });
+          return;
+        }
+
+        if (kDebugMode) {
+          print('✅ New OTP email sent successfully to $email');
+          print('✅ New Generated OTP: $generatedOtp');
+        }
+      } catch (emailError) {
+        if (!mounted) return;
+        setState(() {
+          _otpError = 'Failed to send OTP email. Please try again.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Step 3: Store the new OTP in Firebase (the one that was sent via email)
+      try {
+        await FirestoreService.storeOTPForPasswordReset(
+          email: email,
+          userId: userId,
+          otp: generatedOtp,
+        );
+      } catch (e) {
+        // If storing fails, log but continue (OTP was already sent)
+        if (kDebugMode) {
+          print('Warning: Failed to store OTP in Firebase: $e');
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _otpError = null;
+      });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('OTP has been sent. Please check your email inbox.'),
+            backgroundColor: Color(0xFF2E7D32),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _otpError = 'Failed to resend OTP. Please try again.';
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _verifyOTP() async {
@@ -179,13 +363,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _otpError = 'Please enter the OTP';
       });
+      _formKey.currentState?.validate();
       return;
     }
 
-    if (otpValue.length != 6) {
+    if (otpValue.length != 4) {
       setState(() {
-        _otpError = 'OTP must be 6 digits';
+        _otpError = 'OTP must be 4 digits';
       });
+      _formKey.currentState?.validate();
       return;
     }
 
@@ -194,25 +380,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       setState(() {
         _otpError = 'OTP must contain only numbers';
       });
+      _formKey.currentState?.validate();
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // DESIGN MODE: Skip OTP verification for design testing
-    // Simulate a delay to show loading state
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    setState(() {
-      _userId = 'design-test-user-id'; // Dummy user ID for design testing
-      _currentStep = 2; // Move to password reset step
-      _isLoading = false;
-    });
-
-    /* ORIGINAL CODE - Uncomment when ready to use real OTP verification
     try {
+      if (kDebugMode) {
+        print('🔍 Verifying OTP: $otpValue for email: ${_userEmail}');
+      }
+
       final userId = await FirestoreService.verifyOTPForPasswordReset(
         email: _userEmail!,
         otp: otpValue,
@@ -224,7 +402,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _userId = userId;
         _currentStep = 2; // Move to password reset step
         _isLoading = false;
+        _otpError = null; // Clear any previous errors
       });
+
+      // Show success message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'OTP verified successfully! Please enter your new password.',
+            ),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -233,15 +425,53 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      final errorMessage = e.toString().replaceFirst('Exception: ', '');
+
+      // Handle different types of exceptions with clear error messages
+      String errorMessage;
+      final errorString = e.toString().toLowerCase();
+
+      // Check for specific error types
+      if (errorString.contains('failed to verify otp') ||
+          errorString.contains('verify otp')) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      } else if (errorString.contains('connection timeout') ||
+          errorString.contains('timeout')) {
+        errorMessage =
+            'Connection timeout. Please check your internet connection and try again.';
+      } else if (errorString.contains('permission')) {
+        errorMessage = 'Database permission error. Please contact support.';
+      } else if (errorString.contains('unavailable') ||
+          errorString.contains('unreachable')) {
+        errorMessage =
+            'Cannot connect to database. Please check your internet connection and try again.';
+      } else if (errorString.contains('failed to send') ||
+          errorString.contains('email')) {
+        // Don't show email sending errors during OTP verification
+        errorMessage =
+            'Failed to verify OTP. Please check the code and try again.';
+      } else {
+        // Generic error - make it clear it's about OTP verification
+        final cleanError = e.toString().replaceFirst('Exception: ', '');
+        if (cleanError.isEmpty || cleanError == e.toString()) {
+          errorMessage =
+              'Failed to verify OTP. Please check the code and try again.';
+        } else {
+          // Only show the error if it doesn't mention email sending
+          if (cleanError.toLowerCase().contains('send') &&
+              cleanError.toLowerCase().contains('email')) {
+            errorMessage =
+                'Failed to verify OTP. Please check the code and try again.';
+          } else {
+            errorMessage = 'Failed to verify OTP: $cleanError';
+          }
+        }
+      }
+
       setState(() {
-        _otpError = errorMessage.isEmpty
-            ? 'An error occurred. Please try again.'
-            : errorMessage;
+        _otpError = errorMessage;
         _isLoading = false;
       });
     }
-    */
   }
 
   Future<void> _resetPassword() async {
@@ -313,30 +543,23 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       return;
     }
 
+    // Validate userId is available
+    if (_userId == null || _userId!.isEmpty) {
+      setState(() {
+        _passwordError =
+            'Session expired. Please start the password reset process again.';
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() => _isLoading = true);
 
-    // DESIGN MODE: Skip password reset for design testing
-    // Simulate a delay to show loading state
-    await Future.delayed(const Duration(seconds: 1));
-
-    if (!mounted) return;
-
-    Navigator.pop(context); // Close forgot password screen
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Password reset successfully! You can now login with your new password.',
-        ),
-        backgroundColor: AppTheme.successColor,
-      ),
-    );
-
-    /* ORIGINAL CODE - Uncomment when ready to use real password reset
     try {
       await FirestoreService.resetPasswordWithOTP(
         userId: _userId!,
         newPassword: newPassword,
+        email: _userEmail, // Pass email as fallback
       );
 
       if (!mounted) return;
@@ -345,8 +568,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Password reset successfully! You can now login with your new password.'),
-          backgroundColor: AppTheme.successColor,
+          content: Text(
+            'Password reset successfully! You can now login with your new password.',
+          ),
+          backgroundColor: const Color(0xFF2E7D32),
         ),
       );
     } on AuthException catch (e) {
@@ -365,7 +590,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _isLoading = false;
       });
     }
-    */
   }
 
   @override
@@ -377,9 +601,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.secondaryColor.withOpacity(0.05),
-              AppTheme.accentColor.withOpacity(0.1),
+              const Color(0xFF6B4423).withOpacity(0.1),
+              const Color(0xFF8B4513).withOpacity(0.05),
+              const Color(0xFFB8860B).withOpacity(0.1),
             ],
           ),
         ),
@@ -419,8 +643,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.secondaryColor,
+                                const Color(0xFF6B4423),
+                                const Color(0xFF8B4513),
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -437,7 +661,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -446,7 +670,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           _currentStep == 0
                               ? 'Enter your email address to receive an OTP code.'
                               : _currentStep == 1
-                              ? 'Enter the 6-digit OTP sent to your email.'
+                              ? 'Enter the 4-digit OTP sent to your email.'
                               : 'Enter your new password.',
                           style: TextStyle(
                             fontSize: 16,
@@ -476,7 +700,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   if (_currentStep == 0) ...[
                     _buildModernTextField(
                       controller: _emailController,
-                      labelText: AppText.email,
+                      labelText: 'Email',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       errorText: _emailError,
@@ -524,7 +748,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       icon: Icons.pin,
                       keyboardType: TextInputType.number,
                       errorText: _otpError,
-                      maxLength: 6,
+                      maxLength: 4,
                       validator: (value) {
                         if (_otpError != null) {
                           return _otpError;
@@ -532,8 +756,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Please enter the OTP';
                         }
-                        if (value.length != 6) {
-                          return 'OTP must be 6 digits';
+                        if (value.length != 4) {
+                          return 'OTP must be 4 digits';
                         }
                         if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
                           return 'OTP must contain only numbers';
@@ -559,7 +783,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(width: 20),
                         TextButton(
-                          onPressed: _isLoading ? null : _sendOTP,
+                          onPressed: _isLoading ? null : _resendOTP,
                           child: const Text('Resend OTP'),
                         ),
                       ],
@@ -649,9 +873,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   TextButton(
                     onPressed: () => Navigator.pop(context),
                     child: const Text(
-                      AppText.backToLogin,
+                      'Back to Login',
                       style: TextStyle(
-                        color: AppTheme.primaryColor,
+                        color: const Color(0xFF6B4423),
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -677,7 +901,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           height: 40,
           decoration: BoxDecoration(
             color: isActive || isCompleted
-                ? AppTheme.primaryColor
+                ? const Color(0xFF6B4423)
                 : Colors.grey[300],
             shape: BoxShape.circle,
           ),
@@ -701,7 +925,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           style: TextStyle(
             fontSize: 12,
             color: isActive || isCompleted
-                ? AppTheme.primaryColor
+                ? const Color(0xFF6B4423)
                 : Colors.grey[600],
             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
           ),
@@ -715,7 +939,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       width: 40,
       height: 2,
       margin: const EdgeInsets.only(bottom: 20),
-      color: _currentStep > 0 ? AppTheme.primaryColor : Colors.grey[300],
+      color: _currentStep > 0 ? const Color(0xFF6B4423) : Colors.grey[300],
     );
   }
 
@@ -760,11 +984,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             keyboardType: keyboardType,
             obscureText: obscureText,
             maxLength: maxLength,
+            inputFormatters: controller == _otpController
+                ? [LengthLimitingTextInputFormatter(4)]
+                : maxLength != null
+                ? [LengthLimitingTextInputFormatter(maxLength)]
+                : null,
             style: const TextStyle(color: Colors.black87),
             decoration: InputDecoration(
               labelText: labelText,
               labelStyle: TextStyle(color: Colors.grey[700]),
-              prefixIcon: Icon(icon, color: AppTheme.primaryColor),
+              prefixIcon: Icon(icon, color: const Color(0xFF6B4423)),
               suffixIcon: suffixIcon,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -780,7 +1009,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide(
-                  color: errorText != null ? Colors.red : AppTheme.primaryColor,
+                  color: errorText != null
+                      ? Colors.red
+                      : const Color(0xFF6B4423),
                   width: 2,
                 ),
               ),
@@ -812,6 +1043,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   _formKey.currentState!.validate();
                 }
               } else if (controller == _otpController && _otpError != null) {
+                // Clear error when user starts typing, but don't validate in real-time
                 setState(() {
                   _otpError = null;
                 });
@@ -850,12 +1082,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: const Color(0xFF6B4423).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),

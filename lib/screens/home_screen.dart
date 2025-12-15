@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hqapp/constants/app_text.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/models/notification_entry.dart';
@@ -11,7 +10,6 @@ import 'package:hqapp/screens/notifications_screen.dart';
 import 'package:hqapp/screens/quiz_screen.dart';
 import 'package:hqapp/screens/map_tracking_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserProfile user;
@@ -59,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _goToAchievements() {
+    // Navigate directly - Achievements screen will show lock screen for guests
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => AchievementsScreen(user: _user)),
@@ -66,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _goToQuiz() {
+    // Navigate directly - Quiz screen will show lock screen for guests
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => QuizScreen(user: _user)),
@@ -124,28 +124,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 width: double.infinity,
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.pop(context, 'changePassword'),
-                  icon: const Icon(Icons.lock, color: AppTheme.primaryColor),
+                  icon: const Icon(Icons.lock, color: const Color(0xFF6B4423)),
                   label: const Text(
                     'Change Password',
-                    style: TextStyle(color: AppTheme.primaryColor),
+                    style: TextStyle(color: const Color(0xFF6B4423)),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppTheme.primaryColor),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context, 'delete'),
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  label: const Text(
-                    'Delete Account',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Colors.red),
+                    side: const BorderSide(color: Color(0xFF6B4423)),
                   ),
                 ),
               ),
@@ -166,7 +151,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Profile updated successfully'),
-            backgroundColor: AppTheme.successColor,
+            backgroundColor: const Color(0xFF2E7D32),
             duration: Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
@@ -174,8 +159,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } else if (action == 'changePassword') {
       await _changePassword();
-    } else if (action == 'delete') {
-      await _deleteAccount();
     }
   }
 
@@ -421,7 +404,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Password changed successfully'),
-                              backgroundColor: AppTheme.successColor,
+                              backgroundColor: const Color(0xFF2E7D32),
                               duration: Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -470,60 +453,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _deleteAccount() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete Account?'),
-        content: const Text(
-          'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true) {
-      try {
-        await FirestoreService.deleteUser(_user.id);
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account deleted successfully'),
-              backgroundColor: Colors.green,
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error deleting account: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
-  }
-
   Widget _buildHomeContent() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -535,17 +464,16 @@ class _HomeScreenState extends State<HomeScreen> {
             width: double.infinity,
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  color: const Color(0xFF6B4423).withOpacity(0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                   spreadRadius: 2,
                 ),
               ],
               border: Border.all(
-                color: AppTheme.primaryColor.withOpacity(0.2),
+                color: const Color(0xFF6B4423).withOpacity(0.2),
                 width: 1.5,
               ),
             ),
@@ -562,7 +490,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       shape: BoxShape.circle,
                       gradient: RadialGradient(
                         colors: [
-                          AppTheme.accentColor.withOpacity(0.1),
+                          const Color(0xFFB8860B).withOpacity(0.1),
                           Colors.transparent,
                         ],
                       ),
@@ -580,8 +508,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              AppTheme.primaryColor,
-                              AppTheme.secondaryColor,
+                              const Color(0xFF6B4423),
+                              const Color(0xFF8B4513),
                             ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -589,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           borderRadius: BorderRadius.circular(18),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              color: const Color(0xFF6B4423).withOpacity(0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
@@ -608,18 +536,18 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               _user.id == 'guest'
-                                  ? AppText.welcomeGuest
-                                  : AppText.welcomeUser(_user.fullName),
+                                  ? 'Welcome, Guest!'
+                                  : 'Welcome, ${_user.fullName}!',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                                color: const Color(0xFF6B4423),
                                 letterSpacing: 0.5,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              AppText.scanExploreEarn,
+                              'Scan, Explore, Earn',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -696,7 +624,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Icon(
                               Icons.emoji_events,
-                              color: AppTheme.accentColor,
+                              color: const Color(0xFFB8860B),
                             ),
                             const SizedBox(width: 8),
                             const Text(
@@ -718,7 +646,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ? totalPoints.toString()
                                     : 'Earn points!',
                                 Icons.stars,
-                                AppTheme.accentColor,
+                                const Color(0xFFB8860B),
                               ),
                             ),
                             Container(
@@ -731,7 +659,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 'Rank',
                                 userRank > 0 ? '#$userRank' : 'Start playing!',
                                 Icons.leaderboard,
-                                AppTheme.primaryColor,
+                                const Color(0xFF6B4423),
                               ),
                             ),
                           ],
@@ -740,21 +668,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: AppTheme.accentColor.withOpacity(0.1),
+                            color: const Color(0xFFB8860B).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
                             children: [
                               Icon(
                                 Icons.workspace_premium,
-                                color: AppTheme.accentColor,
+                                color: const Color(0xFFB8860B),
                               ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
                                   'Keep playing quizzes to unlock more achievements and improve your ranking!',
                                   style: TextStyle(
-                                    color: AppTheme.primaryColor,
+                                    color: const Color(0xFF6B4423),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -775,40 +703,41 @@ class _HomeScreenState extends State<HomeScreen> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.1,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
             children: [
               _buildDashboardCard(
                 icon: Icons.quiz,
-                title: AppText.nizwaCastleQuiz,
+                title: 'Nizwa Castle Quiz',
                 subtitle: 'Test your knowledge about Nizwa Castle',
-                color: AppTheme.primaryColor,
+                color: const Color(0xFF6B4423),
                 onTap: _goToQuiz,
               ),
               _buildDashboardCard(
                 icon: Icons.map,
                 title: 'Map',
                 subtitle: 'Track your location',
-                color: AppTheme.secondaryColor,
+                color: const Color(0xFF8B4513),
                 onTap: _openMap,
               ),
               _buildDashboardCard(
                 icon: Icons.emoji_events,
                 title: 'Leaderboard',
                 subtitle: 'Track your progress and compete',
-                color: AppTheme.accentColor,
+                color: const Color(0xFFB8860B),
                 onTap: _goToLeaderboard,
               ),
               _buildDashboardCard(
                 icon: Icons.workspace_premium,
-                title: AppText.achievements,
+                title: 'Achievements',
                 subtitle: 'Unlock badges and earn rewards',
-                color: AppTheme.successColor,
+                color: const Color(0xFF2E7D32),
                 onTap: _goToAchievements,
               ),
             ],
           ),
+          const SizedBox(height: 20),
         ],
       ),
     );
@@ -835,29 +764,41 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color),
+              child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 8),
+            Flexible(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(color: Colors.grey[600], fontSize: 11),
-              textAlign: TextAlign.center,
+            Flexible(
+              child: Text(
+                subtitle,
+                style: TextStyle(color: Colors.grey[600], fontSize: 9),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -1092,13 +1033,13 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text(
-          AppText.appTitle,
+          'Heritage Quest',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -1175,7 +1116,7 @@ class _HomeScreenState extends State<HomeScreen> {
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
           type: BottomNavigationBarType.fixed,
-          selectedItemColor: AppTheme.primaryColor,
+          selectedItemColor: const Color(0xFF6B4423),
           unselectedItemColor: Colors.grey[400],
           backgroundColor: Colors.white,
           elevation: 0,
@@ -1183,17 +1124,17 @@ class _HomeScreenState extends State<HomeScreen> {
             BottomNavigationBarItem(
               icon: Icon(Icons.home_outlined),
               activeIcon: Icon(Icons.home),
-              label: AppText.home,
+              label: 'Home',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.qr_code_scanner_outlined),
               activeIcon: Icon(Icons.qr_code_scanner),
-              label: AppText.scan,
+              label: 'Scan',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
               activeIcon: Icon(Icons.person),
-              label: AppText.profile,
+              label: 'Profile',
             ),
           ],
         ),

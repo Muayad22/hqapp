@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hqapp/constants/app_text.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/admin_feedback_screen.dart';
 import 'package:hqapp/screens/leaderboard_screen.dart';
 import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/screens/manage_users_screen.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   final UserProfile user;
@@ -24,9 +22,9 @@ class AdminHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${AppText.appTitle} Admin'),
+        title: Text('${'Heritage Quest'} Admin'),
         backgroundColor: Colors.white,
-        foregroundColor: AppTheme.primaryColor,
+        foregroundColor: const Color(0xFF6B4423),
         elevation: 0,
         actions: [
           Container(
@@ -66,17 +64,16 @@ class AdminHomeScreen extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.15),
+                    color: const Color(0xFF6B4423).withOpacity(0.15),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                     spreadRadius: 2,
                   ),
                 ],
                 border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: const Color(0xFF6B4423).withOpacity(0.2),
                   width: 1.5,
                 ),
               ),
@@ -93,7 +90,7 @@ class AdminHomeScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         gradient: RadialGradient(
                           colors: [
-                            AppTheme.accentColor.withOpacity(0.1),
+                            const Color(0xFFB8860B).withOpacity(0.1),
                             Colors.transparent,
                           ],
                         ),
@@ -111,8 +108,8 @@ class AdminHomeScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.secondaryColor,
+                                const Color(0xFF6B4423),
+                                const Color(0xFF8B4513),
                               ],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -120,7 +117,7 @@ class AdminHomeScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(18),
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withOpacity(0.3),
+                                color: const Color(0xFF6B4423).withOpacity(0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
@@ -142,7 +139,7 @@ class AdminHomeScreen extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: const Color(0xFF6B4423),
                                   letterSpacing: 0.5,
                                 ),
                               ),
@@ -168,9 +165,9 @@ class AdminHomeScreen extends StatelessWidget {
             Expanded(
               child: GridView.count(
                 crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.1,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.2,
                 children: [
                   _AdminCard(
                     icon: Icons.group,
@@ -244,27 +241,43 @@ class _AdminCard extends StatelessWidget {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: const Color(0xFF6B4423).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: AppTheme.primaryColor),
+              child: Icon(icon, color: const Color(0xFF6B4423), size: 24),
             ),
-            const Spacer(),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              subtitle,
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            const SizedBox(height: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: Colors.grey[600], fontSize: 10),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
         ),

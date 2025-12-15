@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -46,7 +45,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           'Leaderboard',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -170,7 +169,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         borderRadius: BorderRadius.circular(12),
                         side: rank <= 3
                             ? BorderSide(
-                                color: AppTheme.accentColor.withOpacity(0.3),
+                                color: const Color(0xFFB8860B).withOpacity(0.3),
                                 width: 2,
                               )
                             : BorderSide.none,
@@ -196,7 +195,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             Icon(
                               Icons.stars,
                               size: 16,
-                              color: AppTheme.accentColor,
+                              color: const Color(0xFFB8860B),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -217,8 +216,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                             gradient: rank <= 3
                                 ? LinearGradient(
                                     colors: [
-                                      AppTheme.accentColor,
-                                      AppTheme.primaryColor,
+                                      const Color(0xFFB8860B),
+                                      const Color(0xFF6B4423),
                                     ],
                                   )
                                 : null,

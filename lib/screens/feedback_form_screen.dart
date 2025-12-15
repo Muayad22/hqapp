@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class FeedbackFormScreen extends StatefulWidget {
   final UserProfile user;
@@ -54,7 +53,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
           'Feedback',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -95,7 +94,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                 child: ElevatedButton(
                   onPressed: _submitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
+                    backgroundColor: const Color(0xFF6B4423),
                     foregroundColor: Colors.white,
                   ),
                   child: Text(_submitting ? 'Submitting...' : 'Submit'),

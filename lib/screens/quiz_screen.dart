@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
+import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/services/quiz_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 import 'package:hqapp/utils/animations.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -194,7 +194,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             SnackBar(
               content: const Text('🎯 Achievement Unlocked: First Quiz!'),
               duration: const Duration(seconds: 3),
-              backgroundColor: AppTheme.successColor,
+              backgroundColor: const Color(0xFF2E7D32),
             ),
           );
         }
@@ -212,7 +212,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             SnackBar(
               content: const Text('🏆 Achievement Unlocked: Perfect Score!'),
               duration: const Duration(seconds: 3),
-              backgroundColor: AppTheme.successColor,
+              backgroundColor: const Color(0xFF2E7D32),
             ),
           );
         }
@@ -231,7 +231,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             SnackBar(
               content: const Text('📚 Achievement Unlocked: Quiz Master!'),
               duration: const Duration(seconds: 3),
-              backgroundColor: AppTheme.successColor,
+              backgroundColor: const Color(0xFF2E7D32),
             ),
           );
         }
@@ -249,7 +249,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
             SnackBar(
               content: const Text('⭐ Achievement Unlocked: Flawless Victory!'),
               duration: const Duration(seconds: 3),
-              backgroundColor: AppTheme.goldColor,
+              backgroundColor: const Color(0xFFDAA520),
             ),
           );
         }
@@ -268,7 +268,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error saving quiz result: $e'),
-          backgroundColor: AppTheme.errorColor,
+          backgroundColor: const Color(0xFFC62828),
         ),
       );
     }
@@ -299,14 +299,71 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    // Show login prompt for guest users
+    if (widget.user.id == 'guest') {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text(
+            'Nizwa Castle Quiz',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          ),
+          backgroundColor: const Color(0xFF6B4423),
+          foregroundColor: Colors.white,
+          elevation: 2,
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.lock, size: 80, color: Colors.grey[400]),
+                const SizedBox(height: 24),
+                Text(
+                  'Login Required',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'You need to login to access the quiz page.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    if (!mounted) return;
+                    Navigator.of(context, rootNavigator: true).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.login),
+                  label: const Text('Login'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: const Text(
           'Nizwa Castle Quiz',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         elevation: 2,
         centerTitle: true,
@@ -341,10 +398,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      color: const Color(0xFF6B4423).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: AppTheme.primaryColor,
+                        color: const Color(0xFF6B4423),
                         width: 2,
                       ),
                     ),
@@ -352,14 +409,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       children: [
                         Icon(
                           Icons.stars,
-                          color: AppTheme.primaryColor,
+                          color: const Color(0xFF6B4423),
                           size: 20,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           'Score: $score',
                           style: TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -373,13 +430,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.accentColor.withOpacity(0.1),
+                      color: const Color(0xFFB8860B).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       '${currentQuestionIndex + 1}/${questions.length}',
                       style: TextStyle(
-                        color: AppTheme.accentColor,
+                        color: const Color(0xFFB8860B),
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -414,14 +471,16 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppTheme.primaryColor,
-                                  AppTheme.secondaryColor,
+                                  const Color(0xFF6B4423),
+                                  const Color(0xFF8B4513),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppTheme.primaryColor.withOpacity(0.4),
+                                  color: const Color(
+                                    0xFF6B4423,
+                                  ).withOpacity(0.4),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -445,12 +504,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [Colors.white, AppTheme.backgroundColor],
+                      colors: [Colors.white, const Color(0xFFF5F5F5)],
                     ),
                     borderRadius: BorderRadius.circular(20),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.primaryColor.withOpacity(0.15),
+                        color: const Color(0xFF6B4423).withOpacity(0.15),
                         blurRadius: 20,
                         offset: const Offset(0, 8),
                         spreadRadius: 2,
@@ -466,14 +525,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.secondaryColor,
+                                const Color(0xFF6B4423),
+                                const Color(0xFF8B4513),
                               ],
                             ),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppTheme.primaryColor.withOpacity(0.4),
+                                color: const Color(0xFF6B4423).withOpacity(0.4),
                                 blurRadius: 15,
                                 offset: const Offset(0, 5),
                               ),
@@ -492,7 +551,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.primaryColor,
+                          color: const Color(0xFF6B4423),
                           height: 1.3,
                         ),
                       ),
@@ -533,15 +592,19 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
                                       colors: [
-                                        AppTheme.accentColor.withOpacity(0.1),
-                                        AppTheme.accentColor.withOpacity(0.05),
+                                        const Color(
+                                          0xFFB8860B,
+                                        ).withOpacity(0.1),
+                                        const Color(
+                                          0xFFB8860B,
+                                        ).withOpacity(0.05),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: AppTheme.accentColor.withOpacity(
-                                        0.3,
-                                      ),
+                                      color: const Color(
+                                        0xFFB8860B,
+                                      ).withOpacity(0.3),
                                       width: 2,
                                     ),
                                   ),
@@ -553,7 +616,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                         children: [
                                           Icon(
                                             Icons.lightbulb,
-                                            color: AppTheme.accentColor,
+                                            color: const Color(0xFFB8860B),
                                             size: 24,
                                           ),
                                           const SizedBox(width: 8),
@@ -562,7 +625,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
-                                              color: AppTheme.accentColor,
+                                              color: const Color(0xFFB8860B),
                                             ),
                                           ),
                                         ],
@@ -571,7 +634,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                       Text(
                                         question.explanation,
                                         style: TextStyle(
-                                          color: AppTheme.primaryColor,
+                                          color: const Color(0xFF6B4423),
                                           fontSize: 15,
                                           height: 1.5,
                                         ),
@@ -598,13 +661,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                     child: ElevatedButton(
                       onPressed: _nextQuestion,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
+                        backgroundColor: const Color(0xFF6B4423),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                         elevation: 8,
-                        shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                        shadowColor: const Color(0xFF6B4423).withOpacity(0.4),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -650,14 +713,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
     if (showResult) {
       if (isCorrect) {
-        backgroundColor = AppTheme.successColor.withOpacity(0.15);
-        borderColor = AppTheme.successColor;
-        textColor = AppTheme.successColor;
+        backgroundColor = const Color(0xFF2E7D32).withOpacity(0.15);
+        borderColor = const Color(0xFF2E7D32);
+        textColor = const Color(0xFF2E7D32);
         icon = Icons.check_circle;
       } else if (isSelected && !isCorrect) {
-        backgroundColor = AppTheme.errorColor.withOpacity(0.15);
-        borderColor = AppTheme.errorColor;
-        textColor = AppTheme.errorColor;
+        backgroundColor = const Color(0xFFC62828).withOpacity(0.15);
+        borderColor = const Color(0xFFC62828);
+        textColor = const Color(0xFFC62828);
         icon = Icons.cancel;
       } else {
         backgroundColor = Colors.grey[100]!;
@@ -665,9 +728,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         textColor = Colors.grey[600]!;
       }
     } else if (isSelected) {
-      backgroundColor = AppTheme.primaryColor.withOpacity(0.15);
-      borderColor = AppTheme.primaryColor;
-      textColor = AppTheme.primaryColor;
+      backgroundColor = const Color(0xFF6B4423).withOpacity(0.15);
+      borderColor = const Color(0xFF6B4423);
+      textColor = const Color(0xFF6B4423);
     }
 
     return Container(
@@ -806,12 +869,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                         decoration: BoxDecoration(
                                           gradient: RadialGradient(
                                             colors: [
-                                              AppTheme.goldColor.withOpacity(
-                                                0.3,
-                                              ),
-                                              AppTheme.goldColor.withOpacity(
-                                                0.1,
-                                              ),
+                                              const Color(
+                                                0xFFDAA520,
+                                              ).withOpacity(0.3),
+                                              const Color(
+                                                0xFFDAA520,
+                                              ).withOpacity(0.1),
                                             ],
                                           ),
                                           shape: BoxShape.circle,
@@ -828,12 +891,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                     end: Alignment.bottomRight,
                                     colors: isPerfect
                                         ? [
-                                            AppTheme.goldColor,
-                                            AppTheme.secondaryColor,
+                                            const Color(0xFFDAA520),
+                                            const Color(0xFF8B4513),
                                           ]
                                         : [
-                                            AppTheme.primaryColor,
-                                            AppTheme.secondaryColor,
+                                            const Color(0xFF6B4423),
+                                            const Color(0xFF8B4513),
                                           ],
                                   ),
                                   shape: BoxShape.circle,
@@ -841,8 +904,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                     BoxShadow(
                                       color:
                                           (isPerfect
-                                                  ? AppTheme.goldColor
-                                                  : AppTheme.primaryColor)
+                                                  ? const Color(0xFFDAA520)
+                                                  : const Color(0xFF6B4423))
                                               .withOpacity(0.4),
                                       blurRadius: 30,
                                       offset: const Offset(0, 10),
@@ -874,7 +937,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   fontSize: 56,
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.primaryColor,
+                                  color: const Color(0xFF6B4423),
                                 ),
                               );
                             },
@@ -899,7 +962,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w600,
-                                  color: AppTheme.secondaryColor,
+                                  color: const Color(0xFF8B4513),
                                 ),
                               );
                             },
@@ -911,13 +974,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  AppTheme.accentColor.withOpacity(0.1),
-                                  AppTheme.accentColor.withOpacity(0.05),
+                                  const Color(0xFFB8860B).withOpacity(0.1),
+                                  const Color(0xFFB8860B).withOpacity(0.05),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: AppTheme.accentColor.withOpacity(0.3),
+                                color: const Color(0xFFB8860B).withOpacity(0.3),
                                 width: 2,
                               ),
                             ),
@@ -927,7 +990,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w600,
-                                color: AppTheme.primaryColor,
+                                color: const Color(0xFF6B4423),
                                 height: 1.4,
                               ),
                             ),
@@ -948,15 +1011,15 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.primaryColor,
+                                backgroundColor: const Color(0xFF6B4423),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 elevation: 8,
-                                shadowColor: AppTheme.primaryColor.withOpacity(
-                                  0.4,
-                                ),
+                                shadowColor: const Color(
+                                  0xFF6B4423,
+                                ).withOpacity(0.4),
                               ),
                             ),
                           ),
@@ -975,9 +1038,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
-                                foregroundColor: AppTheme.primaryColor,
+                                foregroundColor: const Color(0xFF6B4423),
                                 side: BorderSide(
-                                  color: AppTheme.primaryColor,
+                                  color: const Color(0xFF6B4423),
                                   width: 2,
                                 ),
                                 shape: RoundedRectangleBorder(
@@ -1001,21 +1064,21 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
           // Fallback UI if animation fails
           return Scaffold(
-            backgroundColor: AppTheme.backgroundColor,
+            backgroundColor: const Color(0xFFF5F5F5),
             body: Center(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.star, size: 64, color: AppTheme.primaryColor),
+                    Icon(Icons.star, size: 64, color: const Color(0xFF6B4423)),
                     const SizedBox(height: 24),
                     Text(
                       '$safeScore / $totalQuestions',
                       style: TextStyle(
                         fontSize: 56,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
+                        color: const Color(0xFF6B4423),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -1024,7 +1087,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.secondaryColor,
+                        color: const Color(0xFF8B4513),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -1034,7 +1097,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
+                        color: const Color(0xFF6B4423),
                       ),
                     ),
                     const SizedBox(height: 40),
@@ -1052,7 +1115,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
+                          backgroundColor: const Color(0xFF6B4423),
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -1075,9 +1138,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppTheme.primaryColor,
+                          foregroundColor: const Color(0xFF6B4423),
                           side: BorderSide(
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                             width: 2,
                           ),
                           shape: RoundedRectangleBorder(

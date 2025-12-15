@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hqapp/constants/app_text.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/admin_home_screen.dart';
 import 'package:hqapp/screens/forgot_password_screen.dart';
 import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/screens/register_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     // Validate form - this will trigger validators and show errors
     final isValid = _formKey.currentState!.validate();
-    
+
     // If validation fails, manually check and set errors
     if (!isValid) {
       // Check email format
@@ -50,7 +48,9 @@ class _LoginScreenState extends State<LoginScreen> {
           _emailError = 'Email cannot be empty.';
         });
       } else {
-        final emailPattern = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+        final emailPattern = RegExp(
+          r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+        );
         if (!emailPattern.hasMatch(emailValue)) {
           setState(() {
             _emailError = 'Please enter a valid email like example@gmail.com';
@@ -65,19 +65,19 @@ class _LoginScreenState extends State<LoginScreen> {
           });
         }
       }
-      
+
       // Check password
       final passwordValue = _passwordController.text;
       if (passwordValue.isEmpty) {
         setState(() {
           _passwordError = 'Password cannot be empty.';
         });
-      } else if (passwordValue.length < 6) {
+      } else if (passwordValue.length < 8) {
         setState(() {
-          _passwordError = 'Password must be at least 6 characters.';
+          _passwordError = 'Password must be at least 8 characters';
         });
       }
-      
+
       // Re-validate to show the errors
       _formKey.currentState!.validate();
       return;
@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       // Set error on both fields for authentication errors
       final errorMessage = error.message.toLowerCase();
-      if (errorMessage.contains('email') || 
+      if (errorMessage.contains('email') ||
           errorMessage.contains('password') ||
           errorMessage.contains('invalid') ||
           errorMessage.contains('account') ||
@@ -170,9 +170,9 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.secondaryColor.withOpacity(0.05),
-              AppTheme.accentColor.withOpacity(0.1),
+              const Color(0xFF6B4423).withOpacity(0.1),
+              const Color(0xFF8B4513).withOpacity(0.05),
+              const Color(0xFFB8860B).withOpacity(0.1),
             ],
           ),
         ),
@@ -205,8 +205,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                AppTheme.primaryColor,
-                                AppTheme.secondaryColor,
+                                const Color(0xFF6B4423),
+                                const Color(0xFF8B4513),
                               ],
                             ),
                             shape: BoxShape.circle,
@@ -219,17 +219,17 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          AppText.appTitle,
+                          'Heritage Quest',
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          AppText.appSubtitle,
+                          'Discover Oman\'s Rich Heritage',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -242,7 +242,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
                   _buildModernTextField(
                     controller: _emailController,
-                    labelText: AppText.email,
+                    labelText: 'Email',
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     errorText: _emailError,
@@ -257,7 +257,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         return 'Email cannot be empty.';
                       }
                       // Better email validation - check format properly
-                      final emailPattern = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+                      final emailPattern = RegExp(
+                        r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                      );
                       if (!emailPattern.hasMatch(value)) {
                         return 'Please enter a valid email like example@gmail.com';
                       }
@@ -275,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _passwordController,
-                    labelText: AppText.password,
+                    labelText: 'Password',
                     icon: Icons.lock_outline,
                     obscureText: _obscurePassword,
                     errorText: _passwordError,
@@ -309,9 +311,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       onPressed: _forgotPassword,
                       child: Text(
-                        AppText.forgotPassword,
+                        'Forgot Password?',
                         style: TextStyle(
-                          color: AppTheme.primaryColor,
+                          color: const Color(0xFF6B4423),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -319,7 +321,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   _buildGradientButton(
-                    text: _isLoading ? 'Signing In...' : AppText.login,
+                    text: _isLoading ? 'Signing In...' : 'Login',
                     onPressed: _isLoading ? null : _login,
                   ),
                   const SizedBox(height: 30),
@@ -331,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          AppText.orContinueAs,
+                          'or continue as',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
@@ -345,7 +347,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   _buildOutlinedButton(
-                    text: AppText.continueAsGuest,
+                    text: 'Continue as Guest',
                     onPressed: _continueAsGuest,
                   ),
                   const SizedBox(height: 30),
@@ -353,15 +355,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        AppText.dontHaveAccount,
+                        'Don\'t have an account? ',
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
                       ),
                       TextButton(
                         onPressed: _goToRegister,
                         child: Text(
-                          AppText.createOne,
+                          'Create one',
                           style: const TextStyle(
-                            color: AppTheme.primaryColor,
+                            color: const Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -421,7 +423,7 @@ class _LoginScreenState extends State<LoginScreen> {
             decoration: InputDecoration(
               labelText: labelText,
               labelStyle: TextStyle(color: Colors.grey[700]),
-              prefixIcon: Icon(icon, color: AppTheme.primaryColor),
+              prefixIcon: Icon(icon, color: const Color(0xFF6B4423)),
               suffixIcon: suffixIcon,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
@@ -437,7 +439,9 @@ class _LoginScreenState extends State<LoginScreen> {
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide(
-                  color: errorText != null ? Colors.red : AppTheme.primaryColor,
+                  color: errorText != null
+                      ? Colors.red
+                      : const Color(0xFF6B4423),
                   width: 2,
                 ),
               ),
@@ -508,12 +512,12 @@ class _LoginScreenState extends State<LoginScreen> {
       height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppTheme.primaryColor, AppTheme.secondaryColor],
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
         ),
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
+            color: const Color(0xFF6B4423).withOpacity(0.3),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -545,7 +549,7 @@ class _LoginScreenState extends State<LoginScreen> {
       height: 56,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: AppTheme.primaryColor, width: 2),
+        border: Border.all(color: const Color(0xFF6B4423), width: 2),
       ),
       child: OutlinedButton(
         onPressed: onPressed,
@@ -558,7 +562,7 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Text(
           text,
           style: const TextStyle(
-            color: AppTheme.primaryColor,
+            color: const Color(0xFF6B4423),
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),

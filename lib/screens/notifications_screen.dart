@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:hqapp/models/notification_entry.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/theme/app_theme.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final UserProfile user;
@@ -20,7 +19,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Notifications'),
-          backgroundColor: AppTheme.primaryColor,
+          backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
         ),
         body: Center(
@@ -53,7 +52,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Notifications'),
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         actions: [
           StreamBuilder<List<NotificationEntry>>(
@@ -94,7 +93,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.notifications_none, size: 80, color: Colors.grey[400]),
+                  Icon(
+                    Icons.notifications_none,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 24),
                   Text(
                     'No Notifications',
@@ -141,15 +144,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     switch (notification.type) {
       case 'achievement':
         icon = Icons.workspace_premium;
-        iconColor = AppTheme.successColor;
+        iconColor = const Color(0xFF2E7D32);
         break;
       case 'quiz':
         icon = Icons.quiz;
-        iconColor = AppTheme.primaryColor;
+        iconColor = const Color(0xFF6B4423);
         break;
       default:
         icon = Icons.notifications;
-        iconColor = AppTheme.accentColor;
+        iconColor = const Color(0xFFB8860B);
     }
 
     return Dismissible(
@@ -175,7 +178,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       },
       child: Card(
         margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        color: notification.isRead ? Colors.white : AppTheme.primaryColor.withOpacity(0.05),
+        color: notification.isRead
+            ? Colors.white
+            : const Color(0xFF6B4423).withOpacity(0.05),
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: iconColor.withOpacity(0.1),
@@ -184,7 +189,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           title: Text(
             notification.title,
             style: TextStyle(
-              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+              fontWeight: notification.isRead
+                  ? FontWeight.normal
+                  : FontWeight.bold,
             ),
           ),
           subtitle: Column(
@@ -195,10 +202,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(height: 4),
               Text(
                 _formatDate(notification.createdAt),
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[600],
-                ),
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
             ],
           ),
@@ -208,7 +212,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryColor,
+                    color: const Color(0xFF6B4423),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -243,4 +247,3 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 }
-

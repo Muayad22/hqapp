@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:firebase_database/firebase_database.dart';
@@ -11,6 +12,51 @@ import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/models/notification_entry.dart';
 import 'package:hqapp/models/quiz_result.dart';
 import 'package:hqapp/models/user_profile.dart';
+
+// Debug logging helper
+void _debugLog(
+  String location,
+  String message,
+  Map<String, dynamic> data,
+  String hypothesisId,
+) {
+  if (kDebugMode) {
+    try {
+      final logEntry = {
+        'id': 'log_${DateTime.now().millisecondsSinceEpoch}',
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'location': location,
+        'message': message,
+        'data': data,
+        'sessionId': 'debug-session',
+        'runId': 'run1',
+        'hypothesisId': hypothesisId,
+      };
+      final logPath = r'c:\FlutterApps\hq\.cursor\debug.log';
+      final logFile = File(logPath);
+
+      // Create directory if it doesn't exist
+      final logDir = logFile.parent;
+      if (!logDir.existsSync()) {
+        logDir.createSync(recursive: true);
+      }
+
+      // Write log entry
+      logFile.writeAsStringSync(
+        '${jsonEncode(logEntry)}\n',
+        mode: FileMode.append,
+      );
+
+      // Also print to console for immediate visibility
+      print(
+        '🔍 [DEBUG] $location: $message | Data: $data | Hypothesis: $hypothesisId',
+      );
+    } catch (e) {
+      // Print error if logging fails
+      print('❌ Debug log write failed: $e');
+    }
+  }
+}
 
 class AuthException implements Exception {
   const AuthException(this.message);
@@ -58,7 +104,7 @@ class FirestoreService {
     try {
       // Convert email to lowercase
       final normalizedEmail = email.toLowerCase().trim();
-      
+
       // Check if email already exists
       final usersSnapshot = await _db
           .child(_usersPath)
@@ -77,7 +123,8 @@ class FirestoreService {
         if (usersData != null) {
           for (var entry in usersData.entries) {
             final userData = entry.value as Map<dynamic, dynamic>;
-            final existingEmail = (userData['email'] as String? ?? '').toLowerCase();
+            final existingEmail = (userData['email'] as String? ?? '')
+                .toLowerCase();
             if (existingEmail == normalizedEmail) {
               throw const AuthException(
                 'An account with this email already exists.',
@@ -179,7 +226,7 @@ class FirestoreService {
     try {
       // Convert email to lowercase
       final normalizedEmail = email.toLowerCase().trim();
-      
+
       final usersSnapshot = await _db
           .child(_usersPath)
           .get()
@@ -193,12 +240,12 @@ class FirestoreService {
           );
 
       if (!usersSnapshot.exists) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
       if (usersData == null || usersData.isEmpty) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       // Find user by email
@@ -216,7 +263,7 @@ class FirestoreService {
       }
 
       if (userId == null || userData == null) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       final storedHash = userData['passwordHash'] as String? ?? '';
@@ -405,7 +452,9 @@ class FirestoreService {
         final userId = entry.key as String;
         final userData = entry.value as Map<dynamic, dynamic>;
         try {
-          users.add(UserProfile.fromMap(userId, Map<String, dynamic>.from(userData)));
+          users.add(
+            UserProfile.fromMap(userId, Map<String, dynamic>.from(userData)),
+          );
         } catch (e) {
           if (kDebugMode) {
             print('Error parsing user $userId: $e');
@@ -427,7 +476,7 @@ class FirestoreService {
     try {
       // Convert email to lowercase
       final normalizedEmail = email.toLowerCase().trim();
-      
+
       final usersSnapshot = await _db
           .child(_usersPath)
           .get()
@@ -441,12 +490,12 @@ class FirestoreService {
           );
 
       if (!usersSnapshot.exists) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
       if (usersData == null || usersData.isEmpty) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered. ');
       }
 
       // Find user by email
@@ -454,7 +503,8 @@ class FirestoreService {
 
       for (var entry in usersData.entries) {
         final userData = entry.value as Map<dynamic, dynamic>;
-        final existingEmail = (userData['email'] as String? ?? '').toLowerCase();
+        final existingEmail = (userData['email'] as String? ?? '')
+            .toLowerCase();
         if (existingEmail == normalizedEmail) {
           userId = entry.key as String;
           break;
@@ -462,7 +512,7 @@ class FirestoreService {
       }
 
       if (userId == null) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       return userId;
@@ -486,7 +536,7 @@ class FirestoreService {
     try {
       // Convert email to lowercase
       final normalizedEmail = email.toLowerCase().trim();
-      
+
       final usersSnapshot = await _db
           .child(_usersPath)
           .get()
@@ -500,12 +550,12 @@ class FirestoreService {
           );
 
       if (!usersSnapshot.exists) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
       if (usersData == null || usersData.isEmpty) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered. ');
       }
 
       // Find user by email
@@ -513,7 +563,8 @@ class FirestoreService {
 
       for (var entry in usersData.entries) {
         final userData = entry.value as Map<dynamic, dynamic>;
-        final existingEmail = (userData['email'] as String? ?? '').toLowerCase();
+        final existingEmail = (userData['email'] as String? ?? '')
+            .toLowerCase();
         if (existingEmail == normalizedEmail) {
           userId = entry.key as String;
           break;
@@ -521,7 +572,7 @@ class FirestoreService {
       }
 
       if (userId == null) {
-        throw const AuthException('No account found for this email.');
+        throw const AuthException('The email is not registered.  ');
       }
 
       // Update password
@@ -607,9 +658,11 @@ class FirestoreService {
 
     try {
       if (kDebugMode) {
-        print('Recording quiz result: User ${user.id}, Score: $score/$totalQuestions');
+        print(
+          'Recording quiz result: User ${user.id}, Score: $score/$totalQuestions',
+        );
       }
-      
+
       final resultRef = _db.child(_leaderboardPath).push();
       await resultRef.set({
         'userId': user.id,
@@ -618,7 +671,7 @@ class FirestoreService {
         'totalQuestions': totalQuestions,
         'createdAt': DateTime.now().toIso8601String(),
       });
-      
+
       if (kDebugMode) {
         print('Successfully recorded quiz result');
       }
@@ -690,10 +743,12 @@ class FirestoreService {
         // Filter by userId
         if (resultData['userId'] == userId) {
           try {
-            results.add(QuizResult.fromMap(
-              resultId,
-              Map<String, dynamic>.from(resultData),
-            ));
+            results.add(
+              QuizResult.fromMap(
+                resultId,
+                Map<String, dynamic>.from(resultData),
+              ),
+            );
           } catch (e) {
             if (kDebugMode) {
               print('Error parsing quiz result $resultId: $e');
@@ -701,11 +756,11 @@ class FirestoreService {
           }
         }
       }
-      
+
       if (kDebugMode) {
         print('Found ${results.length} quiz results for user $userId');
       }
-      
+
       return results;
     } catch (e) {
       if (kDebugMode) {
@@ -833,7 +888,9 @@ class FirestoreService {
       if (quizCount >= 50) totalPoints += 500;
 
       if (kDebugMode) {
-        print('Calculated total points: $totalPoints for user $userId (quizCount: $quizCount)');
+        print(
+          'Calculated total points: $totalPoints for user $userId (quizCount: $quizCount)',
+        );
       }
 
       // Update leaderboard with calculated points - use set to ensure it's saved
@@ -843,7 +900,7 @@ class FirestoreService {
         'totalPoints': totalPoints,
         'lastUpdated': DateTime.now().toIso8601String(),
       });
-      
+
       if (kDebugMode) {
         print('Successfully saved $totalPoints points for user $userId');
       }
@@ -886,39 +943,40 @@ class FirestoreService {
         .child(_notificationsPath)
         .onValue
         .map((event) {
-      if (!event.snapshot.exists) {
-        return <NotificationEntry>[];
-      }
+          if (!event.snapshot.exists) {
+            return <NotificationEntry>[];
+          }
 
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
-      if (data == null) {
-        return <NotificationEntry>[];
-      }
+          final data = event.snapshot.value as Map<dynamic, dynamic>?;
+          if (data == null) {
+            return <NotificationEntry>[];
+          }
 
-      final notifications = <NotificationEntry>[];
-      for (var entry in data.entries) {
-        final notificationId = entry.key as String;
-        final notificationData = entry.value as Map<dynamic, dynamic>;
-        // Filter by userId
-        if (notificationData['userId'] == userId) {
-          notifications.add(
-            NotificationEntry.fromMap(
-              notificationId,
-              Map<String, dynamic>.from(notificationData),
-            ),
-          );
-        }
-      }
+          final notifications = <NotificationEntry>[];
+          for (var entry in data.entries) {
+            final notificationId = entry.key as String;
+            final notificationData = entry.value as Map<dynamic, dynamic>;
+            // Filter by userId
+            if (notificationData['userId'] == userId) {
+              notifications.add(
+                NotificationEntry.fromMap(
+                  notificationId,
+                  Map<String, dynamic>.from(notificationData),
+                ),
+              );
+            }
+          }
 
-      // Sort by createdAt descending (newest first)
-      notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return notifications;
-    }).handleError((error) {
-      if (kDebugMode) {
-        print('Error loading notifications: $error');
-      }
-      return <NotificationEntry>[];
-    });
+          // Sort by createdAt descending (newest first)
+          notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return notifications;
+        })
+        .handleError((error) {
+          if (kDebugMode) {
+            print('Error loading notifications: $error');
+          }
+          return <NotificationEntry>[];
+        });
   }
 
   /// Mark notification as read
@@ -973,14 +1031,125 @@ class FirestoreService {
     }
   }
 
+  /// Verify email exists and return userId
+  static Future<String> verifyEmailExists(String email) async {
+    final normalizedEmail = email.toLowerCase().trim();
+
+    final usersSnapshot = await _db
+        .child(_usersPath)
+        .get()
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception(
+              'Connection timeout. Please check your internet connection and try again.',
+            );
+          },
+        );
+
+    if (!usersSnapshot.exists) {
+      throw const AuthException('The email is not registered. ');
+    }
+
+    final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
+    if (usersData == null || usersData.isEmpty) {
+      throw const AuthException('The email is not registered.  ');
+    }
+
+    // Find user by email
+    String? userId;
+    for (var entry in usersData.entries) {
+      final userData = entry.value as Map<dynamic, dynamic>;
+      final existingEmail = (userData['email'] as String? ?? '')
+          .trim()
+          .toLowerCase();
+
+      if (existingEmail == normalizedEmail) {
+        userId = entry.key as String;
+        break;
+      }
+    }
+
+    if (userId == null) {
+      throw const AuthException(' The email is not registered.  ');
+    }
+
+    return userId;
+  }
+
+  /// Store OTP in Firebase for password reset
+  static Future<void> storeOTPForPasswordReset({
+    required String email,
+    required String userId,
+    required String otp,
+  }) async {
+    final normalizedEmail = email.toLowerCase().trim();
+
+    // Store OTP with expiration (10 minutes)
+    final otpData = {
+      'email': normalizedEmail,
+      'userId': userId,
+      'otp': otp,
+      'createdAt': DateTime.now().toIso8601String(),
+      'expiresAt': DateTime.now()
+          .add(const Duration(minutes: 10))
+          .toIso8601String(),
+      'used': false,
+    };
+
+    // Store OTP (use email as key for easy lookup, replace special chars)
+    final otpKey = normalizedEmail.replaceAll('.', '_').replaceAll('@', '_');
+
+    await _db
+        .child(_otpPath)
+        .child(otpKey)
+        .set(otpData)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception(
+              'Connection timeout. Please check your internet connection and try again. OTP: $otp',
+            );
+          },
+        );
+
+    // Verify OTP was stored successfully
+    if (kDebugMode) {
+      final verifySnapshot = await _db
+          .child(_otpPath)
+          .child(otpKey)
+          .get()
+          .timeout(const Duration(seconds: 5));
+
+      if (!verifySnapshot.exists) {
+        throw Exception(
+          'OTP was generated but failed to store in database. Please try again.',
+        );
+      }
+    }
+  }
+
   /// Generate and store OTP for password reset
   static Future<String> generateOTPForPasswordReset({
     required String email,
   }) async {
     try {
-      // Convert email to lowercase
+      // Convert email to lowercase and trim whitespace
       final normalizedEmail = email.toLowerCase().trim();
-      
+
+      if (kDebugMode) {
+        print('🔍 Looking for email: $normalizedEmail');
+      }
+
+      // #region agent log
+      _debugLog(
+        'firestore_service.dart:988',
+        'Checking if email exists in database',
+        {'email': normalizedEmail},
+        'C',
+      );
+      // #endregion
+
       // Verify email exists first
       final usersSnapshot = await _db
           .child(_usersPath)
@@ -988,66 +1157,241 @@ class FirestoreService {
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {
+              // #region agent log
+              _debugLog(
+                'firestore_service.dart:995',
+                'Database query timeout',
+                {'email': normalizedEmail},
+                'C',
+              );
+              // #endregion
+
               throw Exception(
                 'Connection timeout. Please check your internet connection and try again.',
               );
             },
           );
 
+      // #region agent log
+      _debugLog('firestore_service.dart:1001', 'Database query completed', {
+        'email': normalizedEmail,
+        'snapshotExists': usersSnapshot.exists,
+      }, 'C');
+      // #endregion
+
       if (!usersSnapshot.exists) {
-        throw const AuthException('No account found for this email.');
+        // #region agent log
+        _debugLog('firestore_service.dart:1005', 'No users found in database', {
+          'email': normalizedEmail,
+        }, 'C');
+        // #endregion
+
+        if (kDebugMode) {
+          print('❌ No users found in database');
+        }
+        throw const AuthException('The email is not registered.  ');
       }
 
       final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
       if (usersData == null || usersData.isEmpty) {
-        throw const AuthException('No account found for this email.');
+        // #region agent log
+        _debugLog(
+          'firestore_service.dart:1013',
+          'Users data is null or empty',
+          {'email': normalizedEmail},
+          'C',
+        );
+        // #endregion
+
+        if (kDebugMode) {
+          print('❌ Users data is null or empty');
+        }
+        throw const AuthException('The email is not registered.  ');
       }
 
-      // Find user by email
+      if (kDebugMode) {
+        print('📊 Total users in database: ${usersData.length}');
+      }
+
+      // Find user by email - check both exact match and trimmed/lowercase match
       String? userId;
+      List<String> foundEmails = [];
+
       for (var entry in usersData.entries) {
         final userData = entry.value as Map<dynamic, dynamic>;
-        final existingEmail = (userData['email'] as String? ?? '').toLowerCase();
-        if (existingEmail == normalizedEmail) {
+        final existingEmail = (userData['email'] as String? ?? '').trim();
+        final existingEmailLower = existingEmail.toLowerCase();
+
+        if (kDebugMode && foundEmails.length < 5) {
+          foundEmails.add(existingEmailLower);
+        }
+
+        // Match with normalized email (case-insensitive, trimmed)
+        if (existingEmailLower == normalizedEmail) {
           userId = entry.key as String;
+          if (kDebugMode) {
+            print('✅ Found user: $userId with email: $existingEmail');
+          }
           break;
         }
       }
 
-      if (userId == null) {
-        throw const AuthException('No account found for this email.');
+      if (kDebugMode && userId == null) {
+        print('❌ Email not found. Searched emails (first 5): $foundEmails');
+        print('❌ Looking for: $normalizedEmail');
       }
+
+      if (userId == null) {
+        // #region agent log
+        _debugLog('firestore_service.dart:1048', 'Email not found in users', {
+          'email': normalizedEmail,
+          'searchedEmails': foundEmails,
+        }, 'C');
+        // #endregion
+
+        throw const AuthException('The email is not registered.  ');
+      }
+
+      // #region agent log
+      _debugLog(
+        'firestore_service.dart:1055',
+        'User found, proceeding to generate OTP',
+        {'email': normalizedEmail, 'userId': userId},
+        'B',
+      );
+      // #endregion
 
       // Generate 6-digit OTP
       final random = Random();
       final otp = (100000 + random.nextInt(900000)).toString();
-      
+
+      // #region agent log
+      _debugLog('firestore_service.dart:1072', 'OTP generated', {
+        'email': normalizedEmail,
+        'userId': userId,
+        'otp': otp,
+      }, 'B');
+      // #endregion
+
       // Store OTP with expiration (10 minutes)
       final otpData = {
         'email': normalizedEmail,
         'userId': userId,
         'otp': otp,
         'createdAt': DateTime.now().toIso8601String(),
-        'expiresAt': DateTime.now().add(const Duration(minutes: 10)).toIso8601String(),
+        'expiresAt': DateTime.now()
+            .add(const Duration(minutes: 10))
+            .toIso8601String(),
         'used': false,
       };
 
       // Store OTP (use email as key for easy lookup, replace special chars)
       final otpKey = normalizedEmail.replaceAll('.', '_').replaceAll('@', '_');
-      await _db
-          .child(_otpPath)
-          .child(otpKey)
-          .set(otpData)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw Exception(
-                'Connection timeout. Please check your internet connection and try again.',
-              );
-            },
-          );
 
-      return otp;
+      // #region agent log
+      _debugLog('firestore_service.dart:1095', 'Attempting database write', {
+        'path': '$_otpPath/$otpKey',
+        'otp': otp,
+      }, 'D');
+      // #endregion
+
+      if (kDebugMode) {
+        print('💾 Storing OTP in database...');
+        print('📁 Path: $_otpPath/$otpKey');
+        print('🔑 OTP: $otp');
+      }
+
+      try {
+        await _db
+            .child(_otpPath)
+            .child(otpKey)
+            .set(otpData)
+            .timeout(
+              const Duration(seconds: 10),
+              onTimeout: () {
+                // #region agent log
+                _debugLog(
+                  'firestore_service.dart:1106',
+                  'Database write timeout',
+                  {'path': '$_otpPath/$otpKey'},
+                  'D',
+                );
+                // #endregion
+
+                if (kDebugMode) {
+                  print('❌ Database write timeout');
+                }
+                throw Exception(
+                  'Connection timeout. Please check your internet connection and try again. OTP: $otp',
+                );
+              },
+            );
+
+        // #region agent log
+        _debugLog('firestore_service.dart:1110', 'Database write completed', {
+          'path': '$_otpPath/$otpKey',
+          'otp': otp,
+        }, 'D');
+        // #endregion
+
+        // Verify OTP was stored successfully
+        if (kDebugMode) {
+          final verifySnapshot = await _db
+              .child(_otpPath)
+              .child(otpKey)
+              .get()
+              .timeout(const Duration(seconds: 5));
+
+          if (verifySnapshot.exists) {
+            print('✅ OTP successfully stored and verified in database');
+            final storedData = verifySnapshot.value as Map<dynamic, dynamic>?;
+            if (storedData != null && storedData['otp'] == otp) {
+              print('✅ OTP matches stored value');
+            } else {
+              print('⚠️ Warning: OTP stored but value mismatch');
+            }
+          } else {
+            print(
+              '❌ ERROR: OTP write succeeded but verification failed - OTP not found in database',
+            );
+            throw Exception(
+              'OTP was generated but failed to store in database. Please try again.',
+            );
+          }
+        }
+
+        return otp;
+      } on FirebaseException catch (e) {
+        if (kDebugMode) {
+          print('❌ Firebase Database Error:');
+          print('   Code: ${e.code}');
+          print('   Message: ${e.message}');
+        }
+
+        // #region agent log
+        _debugLog(
+          'firestore_service.dart:1143',
+          'FirebaseException during database write',
+          {'code': e.code, 'message': e.message, 'otp': otp},
+          'D',
+        );
+        // #endregion
+
+        // Handle specific Firebase errors
+        if (e.code == 'permission-denied') {
+          throw Exception(
+            'Database permission denied. Please check Firebase Database rules. OTP: $otp',
+          );
+        } else if (e.code == 'unavailable' || e.code == 'unreachable') {
+          throw Exception(
+            'Cannot connect to database. Please check your internet connection and try again. OTP: $otp',
+          );
+        } else {
+          throw Exception(
+            'Failed to store OTP in database: ${e.message ?? e.code}. OTP: $otp',
+          );
+        }
+      }
     } catch (e) {
       if (e is AuthException) {
         rethrow;
@@ -1069,7 +1413,13 @@ class FirestoreService {
     try {
       final normalizedEmail = email.toLowerCase().trim();
       final otpKey = normalizedEmail.replaceAll('.', '_').replaceAll('@', '_');
-      
+
+      if (kDebugMode) {
+        print('🔍 Verifying OTP for email: $normalizedEmail');
+        print('🔍 OTP Key: $otpKey');
+        print('🔍 OTP entered: $otp');
+      }
+
       final otpSnapshot = await _db
           .child(_otpPath)
           .child(otpKey)
@@ -1084,46 +1434,104 @@ class FirestoreService {
           );
 
       if (!otpSnapshot.exists) {
-        throw const AuthException('Invalid or expired OTP. Please request a new one.');
+        if (kDebugMode) {
+          print('❌ OTP not found in database for key: $otpKey');
+        }
+        throw const AuthException(
+          'Invalid or expired OTP. Please request a new one.',
+        );
       }
 
       final otpData = otpSnapshot.value as Map<dynamic, dynamic>?;
       if (otpData == null) {
-        throw const AuthException('Invalid or expired OTP. Please request a new one.');
+        if (kDebugMode) {
+          print('❌ OTP data is null');
+        }
+        throw const AuthException(
+          'Invalid or expired OTP. Please request a new one.',
+        );
+      }
+
+      if (kDebugMode) {
+        print('📧 OTP data found: ${otpData['otp']}');
+        print('📧 OTP used: ${otpData['used']}');
+        print('📧 OTP expires at: ${otpData['expiresAt']}');
       }
 
       // Check if OTP is already used
       if (otpData['used'] == true) {
-        throw const AuthException('This OTP has already been used. Please request a new one.');
+        if (kDebugMode) {
+          print('❌ OTP has already been used');
+        }
+        throw const AuthException(
+          'This OTP has already been used. Please request a new one.',
+        );
       }
 
-      // Check if OTP matches
-      if (otpData['otp'] != otp) {
-        throw const AuthException('Invalid OTP. Please check and try again.');
+      // Check if OTP matches (trim both for safety)
+      final storedOtp = (otpData['otp'] as String?)?.trim();
+      final enteredOtp = otp.trim();
+
+      if (storedOtp == null || storedOtp.isEmpty) {
+        if (kDebugMode) {
+          print('❌ Stored OTP is null or empty');
+        }
+        throw const AuthException('Wrong OTP please try again');
+      }
+
+      if (storedOtp != enteredOtp) {
+        if (kDebugMode) {
+          print(
+            '❌ OTP mismatch. Stored: "$storedOtp" (length: ${storedOtp.length}), Entered: "$enteredOtp" (length: ${enteredOtp.length})',
+          );
+        }
+        throw const AuthException('Wrong OTP please try again');
+      }
+
+      if (kDebugMode) {
+        print('✅ OTP matches: $storedOtp');
       }
 
       // Check if OTP is expired
       final expiresAt = DateTime.parse(otpData['expiresAt'] as String);
       if (DateTime.now().isAfter(expiresAt)) {
+        if (kDebugMode) {
+          print(
+            '❌ OTP has expired. Expires at: $expiresAt, Now: ${DateTime.now()}',
+          );
+        }
         throw const AuthException('OTP has expired. Please request a new one.');
       }
 
+      if (kDebugMode) {
+        print('✅ OTP verified successfully');
+      }
+
       // Mark OTP as used
-      await _db
-          .child(_otpPath)
-          .child(otpKey)
-          .update({'used': true});
+      await _db.child(_otpPath).child(otpKey).update({'used': true});
 
       // Return userId for password reset
-      return otpData['userId'] as String;
+      final userId = otpData['userId'] as String;
+      if (kDebugMode) {
+        print('✅ OTP marked as used. UserId: $userId');
+      }
+      return userId;
     } catch (e) {
       if (e is AuthException) {
         rethrow;
       }
       if (e is FirebaseException) {
+        if (kDebugMode) {
+          print(
+            '❌ Firebase Exception during OTP verification: ${e.code} - ${e.message}',
+          );
+        }
         throw Exception(
           'Failed to verify OTP: ${e.message ?? e.code}. Please try again.',
         );
+      }
+      if (kDebugMode) {
+        print('❌ Exception during OTP verification: $e');
       }
       rethrow;
     }
@@ -1133,13 +1541,30 @@ class FirestoreService {
   static Future<void> resetPasswordWithOTP({
     required String userId,
     required String newPassword,
+    String? email,
   }) async {
     try {
-      // Update password
-      await _db
+      if (kDebugMode) {
+        print('🔄 Resetting password for userId: $userId');
+        if (email != null) {
+          print('🔄 Email provided: $email');
+        }
+      }
+
+      // Validate userId
+      if (userId.isEmpty) {
+        throw const AuthException(
+          'Invalid user information. Please try the password reset process again.',
+        );
+      }
+
+      // First, verify the user exists
+      String actualUserId = userId;
+
+      final userSnapshot = await _db
           .child(_usersPath)
           .child(userId)
-          .update({'passwordHash': _hashPassword(newPassword)})
+          .get()
           .timeout(
             const Duration(seconds: 10),
             onTimeout: () {
@@ -1148,7 +1573,71 @@ class FirestoreService {
               );
             },
           );
+
+      // If user not found by userId, try to find by email as fallback
+      if (!userSnapshot.exists) {
+        if (kDebugMode) {
+          print('⚠️ User not found with userId: $userId');
+          if (email != null) {
+            print('🔍 Attempting to find user by email: $email');
+          }
+        }
+
+        // Try to find user by email if provided
+        if (email != null && email.isNotEmpty) {
+          try {
+            actualUserId = await verifyEmailExists(email);
+            if (kDebugMode) {
+              print('✅ Found user by email. New userId: $actualUserId');
+            }
+          } catch (e) {
+            if (kDebugMode) {
+              print('❌ Could not find user by email either: $e');
+            }
+            throw const AuthException(
+              'User account not found. Please contact support.',
+            );
+          }
+        } else {
+          throw const AuthException(
+            'User account not found. Please contact support.',
+          );
+        }
+      }
+
+      // Hash the new password
+      final hashedPassword = _hashPassword(newPassword);
+
+      if (kDebugMode) {
+        print('🔐 Password hashed. Updating database...');
+        print('🔐 User path: $_usersPath/$actualUserId');
+      }
+
+      // Update password using update() method (same as changePassword)
+      await _db
+          .child(_usersPath)
+          .child(actualUserId)
+          .update({'passwordHash': hashedPassword})
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception(
+                'Connection timeout. Please check your internet connection and try again.',
+              );
+            },
+          );
+
+      if (kDebugMode) {
+        print('✅ Password updated in database for userId: $actualUserId');
+      }
     } catch (e) {
+      if (kDebugMode) {
+        print('❌ Error resetting password: $e');
+        print('❌ Error type: ${e.runtimeType}');
+      }
+      if (e is AuthException) {
+        rethrow;
+      }
       if (e is FirebaseException) {
         throw Exception(
           'Failed to reset password: ${e.message ?? e.code}. Please try again.',
