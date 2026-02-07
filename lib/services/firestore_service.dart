@@ -53,7 +53,7 @@ void _debugLog(
       );
     } catch (e) {
       // Print error if logging fails
-      print('❌ Debug log write failed: $e');
+      print(' Debug log write failed: $e');
     }
   }
 }
