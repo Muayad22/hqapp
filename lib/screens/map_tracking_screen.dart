@@ -307,16 +307,6 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
-              _buildGradientButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const QrCode()),
-                  );
-                },
-                text: "Scan Again",
-              ),
             ],
           ),
         ),
