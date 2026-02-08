@@ -107,7 +107,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You\'ll see achievement and quiz notifications here!',
+                    'You \'ll see achievement and quiz notifications here!',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
