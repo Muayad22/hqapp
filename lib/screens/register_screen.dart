@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -19,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _submitting = false;
-  String _visitorType = 'Local'; // Default to 'Local' or 'Foreign'
+  String _visitorType = 'Local'; // Stored value: 'Local' or 'Foreign'
 
   @override
   void dispose() {
@@ -49,12 +50,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         MaterialPageRoute(builder: (_) => HomeScreen(user: user)),
       );
     } on AuthException catch (error) {
-      _showMessage(error.message);
+      _showMessage(AppLocalizations.localizeError(context, error.message));
     } catch (e) {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
+      final l = AppLocalizations.of(context);
       _showMessage(
         errorMessage.isEmpty
-            ? 'An error occurred. Please try again.'
+            ? l.t('register_generic_error')
             : errorMessage,
       );
     } finally {
@@ -72,6 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -128,17 +132,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Create Account',
+                          l.t('register_title'),
                           style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF6B4423),
+                            color: Color(0xFF6B4423),
                           ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Join the heritage exploration journey',
+                          l.t('register_subtitle'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -151,14 +155,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 40),
                   _buildModernTextField(
                     controller: _nameController,
-                    labelText: 'Username / Display Name',
+                    labelText: l.t('register_username_label'),
                     icon: Icons.person_outline,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your username';
+                        return l.t('register_username_required');
                       }
                       if (value.length < 3) {
-                        return 'Username must be at least 3 characters';
+                        return l.t('register_username_min');
                       }
                       return null;
                     },
@@ -166,19 +170,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _mobileController,
-                    labelText: 'Mobile Number',
+                    labelText: l.t('register_mobile_label'),
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Mobile number cannot be empty.';
+                        return l.t('register_mobile_required');
                       }
                       // Check if contains only numbers
                       if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                        return 'Mobile number must contain only numbers.';
+                        return l.t('register_mobile_digits');
                       }
                       if (value.length != 8) {
-                        return 'Mobile number must be exactly 8 digits';
+                        return l.t('register_mobile_length');
                       }
                       return null;
                     },
@@ -186,24 +190,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _emailController,
-                    labelText: 'Email',
+                    labelText: l.t('register_email_label'),
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Email cannot be empty.';
+                        return l.t('register_email_required');
                       }
                       final emailPattern = RegExp(
                         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                       );
                       if (!emailPattern.hasMatch(value)) {
-                        return 'Please enter a valid email like example@gmail.com';
+                        return l.t('register_email_invalid');
                       }
                       if (!value.toLowerCase().contains('.com')) {
-                        return 'Please enter a valid email like example@gmail.com';
+                        return l.t('register_email_invalid');
                       }
                       if (value.contains('.@') || value.contains('@.')) {
-                        return 'Please enter a valid email like example@gmail.com';
+                        return l.t('register_email_invalid');
                       }
                       return null;
                     },
@@ -214,7 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _passwordController,
-                    labelText: 'Password',
+                    labelText: l.t('register_password_label'),
                     icon: Icons.lock_outline,
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
@@ -230,16 +234,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Password cannot be empty.';
+                        return l.t('register_password_required');
                       }
                       if (value.length < 8) {
-                        return 'Password must be at least 8 characters.';
+                        return l.t('register_password_min');
                       }
                       // Check if password contains both letters and numbers
                       final hasLetters = RegExp(r'[a-zA-Z]').hasMatch(value);
                       final hasNumbers = RegExp(r'[0-9]').hasMatch(value);
                       if (!hasLetters || !hasNumbers) {
-                        return 'Password must contain letters and numbers.';
+                        return l.t('register_password_pattern');
                       }
                       return null;
                     },
@@ -247,7 +251,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _confirmPasswordController,
-                    labelText: 'Confirm Password',
+                    labelText: l.t('register_confirm_password_label'),
                     icon: Icons.lock_outline,
                     obscureText: _obscureConfirmPassword,
                     suffixIcon: IconButton(
@@ -265,10 +269,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Cannot be empty';
+                        return l.t('register_confirm_password_required');
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords do not match';
+                        return l.t('register_confirm_password_mismatch');
                       }
                       return null;
                     },
@@ -276,8 +280,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 30),
                   _buildGradientButton(
                     text: _submitting
-                        ? 'Creating Account...'
-                        : 'Create Account',
+                        ? l.t('register_button_creating')
+                        : l.t('register_button_create'),
                     onPressed: _submitting ? null : _signUp,
                   ),
                   const SizedBox(height: 30),
@@ -285,15 +289,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Already have an account? ",
+                        l.t('register_have_account'),
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
                       ),
                       TextButton(
                         onPressed: _goToLogin,
                         child: Text(
-                          'Login',
+                          l.t('register_login'),
                           style: const TextStyle(
-                            color: const Color(0xFF6B4423),
+                            color: Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -395,6 +399,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildVisitorTypeSelector() {
+    final l = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -416,7 +421,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Icon(Icons.public, color: const Color(0xFF6B4423), size: 20),
               const SizedBox(width: 8),
               Text(
-                'Visitor Type',
+                l.t('register_visitor_type'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -431,7 +436,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Expanded(
                 child: _buildRadioOption(
                   value: 'Local',
-                  label: 'Local Visitor',
+                  label: l.t('register_visitor_local'),
                   icon: Icons.home,
                 ),
               ),
@@ -439,7 +444,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Expanded(
                 child: _buildRadioOption(
                   value: 'Foreign',
-                  label: 'Foreign Visitor',
+                  label: l.t('register_visitor_foreign'),
                   icon: Icons.flight,
                 ),
               ),

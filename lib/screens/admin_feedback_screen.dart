@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class AdminFeedbackScreen extends StatefulWidget {
   const AdminFeedbackScreen({super.key});
@@ -12,11 +13,12 @@ class AdminFeedbackScreen extends StatefulWidget {
 class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Feedback',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('admin_feedback_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -38,7 +40,7 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                   Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading feedback',
+                    l.t('admin_feedback_error_title'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
@@ -66,14 +68,14 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No feedback yet',
+                    l.t('admin_feedback_empty_title'),
                     style: Theme.of(
                       context,
                     ).textTheme.titleLarge?.copyWith(color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Feedback from visitors will appear here',
+                    l.t('admin_feedback_empty_message'),
                     style: TextStyle(color: Colors.grey[500]),
                   ),
                 ],
@@ -116,7 +118,7 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                                 Text(
                                   feedback.userName.isNotEmpty
                                       ? feedback.userName
-                                      : 'Anonymous',
+                                      : l.t('admin_feedback_anonymous'),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -160,21 +162,31 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
   }
 
   String _formatDate(DateTime date) {
+    final l = AppLocalizations.of(context);
     final now = DateTime.now();
     final difference = now.difference(date);
 
     if (difference.inDays == 0) {
       if (difference.inHours == 0) {
         if (difference.inMinutes == 0) {
-          return 'Just now';
+          return l.t('time_just_now');
         }
-        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+        return l.t(
+          'time_minutes_ago',
+          params: {'value': difference.inMinutes.toString()},
+        );
       }
-      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+      return l.t(
+        'time_hours_ago',
+        params: {'value': difference.inHours.toString()},
+      );
     } else if (difference.inDays == 1) {
-      return 'Yesterday';
+      return l.t('time_yesterday');
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
+      return l.t(
+        'time_days_ago',
+        params: {'value': difference.inDays.toString()},
+      );
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }

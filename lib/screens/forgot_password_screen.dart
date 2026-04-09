@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:email_otp/email_otp.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/services/email_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 // Debug logging helper
 void _debugLog(
@@ -81,6 +82,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _sendOTP() async {
+    final l = AppLocalizations.of(context);
     // #region agent log
     _debugLog('forgot_password_screen.dart:41', 'Function _sendOTP called', {
       'email': _emailController.text.trim(),
@@ -108,7 +110,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final emailValue = _emailController.text.trim();
       if (emailValue.isEmpty) {
         setState(() {
-          _emailError = 'Email cannot be empty.';
+          _emailError = l.t('register_email_required');
         });
       } else {
         final emailPattern = RegExp(
@@ -116,15 +118,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
         if (!emailPattern.hasMatch(emailValue)) {
           setState(() {
-            _emailError = 'Please enter a valid email like example@gmail.com';
+            _emailError = l.t('register_email_invalid');
           });
         } else if (!emailValue.toLowerCase().contains('.com')) {
           setState(() {
-            _emailError = 'Email must contain .com';
+            _emailError = l.t('register_email_invalid');
           });
         } else if (emailValue.contains('.@') || emailValue.contains('@.')) {
           setState(() {
-            _emailError = 'Please enter a valid email like example@gmail.com';
+            _emailError = l.t('register_email_invalid');
           });
         }
       }
@@ -160,7 +162,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // EmailService will generate a 4-digit OTP and send it via email
       String generatedOtp;
       try {
-        generatedOtp = await EmailService.sendOTPEmail(toEmail: email, otp: '');
+        generatedOtp = await EmailService.sendOTPEmail(
+          toEmail: email,
+          otp: '',
+          languageCode: AppLocalizations.currentLanguageCode,
+        );
 
         // Verify the OTP is 4 digits
         if (generatedOtp.length != 4) {
@@ -174,7 +180,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         // If email sending fails, show error
         if (!mounted) return;
         setState(() {
-          _emailError = 'Failed to send OTP email. Please try again.';
+          _emailError = l.t('forgot_password_failed_send_otp');
           _isLoading = false;
         });
         _formKey.currentState!.validate();
@@ -207,10 +213,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP has been sent. Please check your email inbox.'),
-            backgroundColor: Color(0xFF2E7D32),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(l.t('forgot_password_otp_sent')),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -222,11 +228,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           errorMessage.contains('account') ||
           errorMessage.contains('not found')) {
         setState(() {
-          _emailError = e.message;
+          _emailError = AppLocalizations.localizeError(context, e.message);
         });
       } else {
         setState(() {
-          _emailError = e.message;
+          _emailError = AppLocalizations.localizeError(context, e.message);
         });
       }
       // Trigger validation to show the error
@@ -237,7 +243,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
       setState(() {
         _emailError = errorMessage.isEmpty
-            ? 'An error occurred. Please try again.'
+            ? l.t('register_generic_error')
             : errorMessage;
         _isLoading = false;
       });
@@ -246,6 +252,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _resendOTP() async {
+    final l = AppLocalizations.of(context);
     // Clear previous errors and OTP input
     setState(() {
       _otpError = null;
@@ -255,8 +262,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (_userEmail == null || _userEmail!.isEmpty) {
       setState(() {
-        _otpError =
-            'Email not found. Please go back and enter your email again.';
+        _otpError = l.t('forgot_password_email_not_found');
         _isLoading = false;
       });
       return;
@@ -278,7 +284,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       } catch (e) {
         if (!mounted) return;
         setState(() {
-          _otpError = 'Failed to verify email. Please try again.';
+          _otpError = l.t('forgot_password_failed_verify_email');
           _isLoading = false;
         });
         return;
@@ -287,13 +293,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Step 2: Generate and send 4-digit OTP via EmailService
       String generatedOtp;
       try {
-        generatedOtp = await EmailService.sendOTPEmail(toEmail: email, otp: '');
+        generatedOtp = await EmailService.sendOTPEmail(
+          toEmail: email,
+          otp: '',
+          languageCode: AppLocalizations.currentLanguageCode,
+        );
 
         // Verify the OTP is 4 digits
         if (generatedOtp.length != 4) {
           if (!mounted) return;
           setState(() {
-            _otpError = 'Failed to generate OTP. Please try again.';
+            _otpError = l.t('forgot_password_failed_generate_otp');
             _isLoading = false;
           });
           return;
@@ -306,7 +316,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       } catch (emailError) {
         if (!mounted) return;
         setState(() {
-          _otpError = 'Failed to send OTP email. Please try again.';
+          _otpError = l.t('forgot_password_failed_send_otp');
           _isLoading = false;
         });
         return;
@@ -336,23 +346,24 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP has been sent. Please check your email inbox.'),
-            backgroundColor: Color(0xFF2E7D32),
-            duration: Duration(seconds: 3),
+          SnackBar(
+            content: Text(l.t('forgot_password_otp_sent')),
+            backgroundColor: const Color(0xFF2E7D32),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _otpError = 'Failed to resend OTP. Please try again.';
+        _otpError = l.t('forgot_password_failed_resend_otp');
         _isLoading = false;
       });
     }
   }
 
   Future<void> _verifyOTP() async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _otpError = null;
     });
@@ -361,7 +372,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (otpValue.isEmpty) {
       setState(() {
-        _otpError = 'Please enter the OTP';
+        _otpError = l.t('forgot_password_enter_otp_error');
       });
       _formKey.currentState?.validate();
       return;
@@ -369,7 +380,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (otpValue.length != 4) {
       setState(() {
-        _otpError = 'OTP must be 4 digits';
+        _otpError = l.t('forgot_password_otp_4_digits');
       });
       _formKey.currentState?.validate();
       return;
@@ -378,7 +389,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     // Check if OTP contains only numbers
     if (!RegExp(r'^[0-9]+$').hasMatch(otpValue)) {
       setState(() {
-        _otpError = 'OTP must contain only numbers';
+        _otpError = l.t('forgot_password_otp_numbers_only');
       });
       _formKey.currentState?.validate();
       return;
@@ -408,19 +419,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'OTP verified successfully! Please enter your new password.',
-            ),
+          SnackBar(
+            content: Text(l.t('forgot_password_otp_verified')),
             backgroundColor: const Color(0xFF2E7D32),
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
       }
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {
-        _otpError = e.message;
+        _otpError = AppLocalizations.localizeError(context, e.message);
         _isLoading = false;
       });
     } catch (e) {
@@ -436,33 +445,32 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         errorMessage = e.toString().replaceFirst('Exception: ', '');
       } else if (errorString.contains('connection timeout') ||
           errorString.contains('timeout')) {
-        errorMessage =
-            'Connection timeout. Please check your internet connection and try again.';
+        errorMessage = l.t('forgot_password_timeout');
       } else if (errorString.contains('permission')) {
-        errorMessage = 'Database permission error. Please contact support.';
+        errorMessage = l.t('forgot_password_permission_error');
       } else if (errorString.contains('unavailable') ||
           errorString.contains('unreachable')) {
-        errorMessage =
-            'Cannot connect to database. Please check your internet connection and try again.';
+        errorMessage = l.t('forgot_password_cannot_connect_db');
       } else if (errorString.contains('failed to send') ||
           errorString.contains('email')) {
         // Don't show email sending errors during OTP verification
-        errorMessage =
-            'Failed to verify OTP. Please check the code and try again.';
+        errorMessage = l.t('forgot_password_failed_verify_otp');
       } else {
         // Generic error - make it clear it's about OTP verification
         final cleanError = e.toString().replaceFirst('Exception: ', '');
         if (cleanError.isEmpty || cleanError == e.toString()) {
-          errorMessage =
-              'Failed to verify OTP. Please check the code and try again.';
+          errorMessage = l.t('forgot_password_failed_verify_otp');
         } else {
           // Only show the error if it doesn't mention email sending
           if (cleanError.toLowerCase().contains('send') &&
               cleanError.toLowerCase().contains('email')) {
             errorMessage =
-                'Failed to verify OTP. Please check the code and try again.';
+                l.t('forgot_password_failed_verify_otp');
           } else {
-            errorMessage = 'Failed to verify OTP: $cleanError';
+            errorMessage = l.t(
+              'forgot_password_failed_verify_otp_with_error',
+              params: {'error': cleanError},
+            );
           }
         }
       }
@@ -475,6 +483,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Future<void> _resetPassword() async {
+    final l = AppLocalizations.of(context);
     setState(() {
       _passwordError = null;
     });
@@ -486,22 +495,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final newPassword = _newPasswordController.text;
       if (newPassword.isEmpty) {
         setState(() {
-          _passwordError = 'Cannot be empty';
+          _passwordError = l.t('register_confirm_password_required');
         });
       } else if (newPassword.length < 8) {
         setState(() {
-          _passwordError = 'Password must be at least 8 characters';
+          _passwordError = l.t('register_password_min');
         });
       } else {
         final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(newPassword);
         final hasNumber = RegExp(r'[0-9]').hasMatch(newPassword);
         if (!hasLetter || !hasNumber) {
           setState(() {
-            _passwordError = 'Password must contain letters and numbers';
+            _passwordError = l.t('register_password_pattern');
           });
         } else if (newPassword != _confirmPasswordController.text) {
           setState(() {
-            _passwordError = 'Passwords do not match';
+            _passwordError = l.t('register_confirm_password_mismatch');
           });
         }
       }
@@ -514,14 +523,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     // Additional validation
     if (newPassword.isEmpty) {
       setState(() {
-        _passwordError = 'Cannot be empty';
+        _passwordError = l.t('register_confirm_password_required');
       });
       return;
     }
 
     if (newPassword.length < 8) {
       setState(() {
-        _passwordError = 'Password must be at least 8 characters';
+        _passwordError = l.t('register_password_min');
       });
       return;
     }
@@ -531,14 +540,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     if (!hasLetter || !hasNumber) {
       setState(() {
-        _passwordError = 'Password must contain letters and numbers';
+        _passwordError = l.t('register_password_pattern');
       });
       return;
     }
 
     if (newPassword != confirmPassword) {
       setState(() {
-        _passwordError = 'Passwords do not match';
+        _passwordError = l.t('register_confirm_password_mismatch');
       });
       return;
     }
@@ -546,8 +555,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     // Validate userId is available
     if (_userId == null || _userId!.isEmpty) {
       setState(() {
-        _passwordError =
-            'Session expired. Please start the password reset process again.';
+        _passwordError = l.t('forgot_password_session_expired');
         _isLoading = false;
       });
       return;
@@ -567,17 +575,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       Navigator.pop(context); // Close forgot password screen
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Password reset successfully! You can now login with your new password.',
-          ),
+        SnackBar(
+          content: Text(l.t('forgot_password_reset_success')),
           backgroundColor: const Color(0xFF2E7D32),
         ),
       );
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {
-        _passwordError = e.message;
+        _passwordError = AppLocalizations.localizeError(context, e.message);
         _isLoading = false;
       });
     } catch (e) {
@@ -585,7 +591,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
       setState(() {
         _passwordError = errorMessage.isEmpty
-            ? 'Failed to reset password. Please try again.'
+            ? l.t('forgot_password_failed_reset')
             : errorMessage;
         _isLoading = false;
       });
@@ -594,6 +600,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -616,6 +623,50 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLangChip(
+                            label: 'EN',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'en',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('en');
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          _buildLangChip(
+                            label: 'ع',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'ar',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('ar');
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () => Navigator.pop(context),
@@ -656,9 +707,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Forgot Password?',
-                          style: TextStyle(
+                        Text(
+                          l.t('forgot_password_title'),
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF6B4423),
@@ -668,10 +719,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         const SizedBox(height: 8),
                         Text(
                           _currentStep == 0
-                              ? 'Enter your email address to receive an OTP code.'
+                              ? l.t('forgot_password_hint_email')
                               : _currentStep == 1
-                              ? 'Enter the 4-digit OTP sent to your email.'
-                              : 'Enter your new password.',
+                              ? l.t('forgot_password_hint_otp')
+                              : l.t('forgot_password_hint_password'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -687,11 +738,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStepIndicator(0, 'Email'),
+                      _buildStepIndicator(0, l.t('forgot_password_step_email')),
                       _buildStepConnector(),
-                      _buildStepIndicator(1, 'OTP'),
+                      _buildStepIndicator(1, l.t('forgot_password_step_otp')),
                       _buildStepConnector(),
-                      _buildStepIndicator(2, 'Password'),
+                      _buildStepIndicator(
+                        2,
+                        l.t('forgot_password_step_password'),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 40),
@@ -700,7 +754,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   if (_currentStep == 0) ...[
                     _buildModernTextField(
                       controller: _emailController,
-                      labelText: 'Email',
+                      labelText: l.t('email'),
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
                       errorText: _emailError,
@@ -710,26 +764,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           return _emailError;
                         }
                         if (value == null || value.isEmpty) {
-                          return 'Email cannot be empty.';
+                          return l.t('register_email_required');
                         }
                         final emailPattern = RegExp(
                           r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                         );
                         if (!emailPattern.hasMatch(value)) {
-                          return 'Please enter a valid email like example@gmail.com';
+                          return l.t('register_email_invalid');
                         }
                         if (!value.toLowerCase().contains('.com')) {
-                          return 'Email must contain .com';
+                          return l.t('register_email_invalid');
                         }
                         if (value.contains('.@') || value.contains('@.')) {
-                          return 'Please enter a valid email like example@gmail.com';
+                          return l.t('register_email_invalid');
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 30),
                     _buildGradientButton(
-                      text: _isLoading ? 'Sending OTP...' : 'Send OTP',
+                      text: _isLoading
+                          ? l.t('forgot_password_sending_otp')
+                          : l.t('forgot_password_send_otp'),
                       onPressed: _isLoading ? null : _sendOTP,
                     ),
                   ],
@@ -737,14 +793,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   // Step 1: OTP input
                   if (_currentStep == 1) ...[
                     Text(
-                      'OTP sent to: ${_userEmail ?? ""}',
+                      l.t(
+                        'forgot_password_otp_sent_to',
+                        params: {'email': _userEmail ?? ''},
+                      ),
                       style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     _buildModernTextField(
                       controller: _otpController,
-                      labelText: 'Enter OTP',
+                      labelText: l.t('forgot_password_enter_otp'),
                       icon: Icons.pin,
                       keyboardType: TextInputType.number,
                       errorText: _otpError,
@@ -754,13 +813,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           return _otpError;
                         }
                         if (value == null || value.isEmpty) {
-                          return 'Please enter the OTP';
+                          return l.t('forgot_password_enter_otp_error');
                         }
                         if (value.length != 4) {
-                          return 'OTP must be 4 digits';
+                          return l.t('forgot_password_otp_4_digits');
                         }
                         if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                          return 'OTP must contain only numbers';
+                          return l.t('forgot_password_otp_numbers_only');
                         }
                         return null;
                       },
@@ -779,18 +838,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     _otpError = null;
                                   });
                                 },
-                          child: const Text('Change Email'),
+                          child: Text(l.t('forgot_password_change_email')),
                         ),
                         const SizedBox(width: 20),
                         TextButton(
                           onPressed: _isLoading ? null : _resendOTP,
-                          child: const Text('Resend OTP'),
+                          child: Text(l.t('forgot_password_resend_otp')),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
                     _buildGradientButton(
-                      text: _isLoading ? 'Verifying...' : 'Verify OTP',
+                      text: _isLoading
+                          ? l.t('forgot_password_verifying')
+                          : l.t('forgot_password_verify_otp'),
                       onPressed: _isLoading ? null : _verifyOTP,
                     ),
                   ],
@@ -799,7 +860,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   if (_currentStep == 2) ...[
                     _buildModernTextField(
                       controller: _newPasswordController,
-                      labelText: 'New Password',
+                      labelText: l.t('new_password'),
                       icon: Icons.lock_outline,
                       obscureText: _obscureNewPassword,
                       errorText: _passwordError,
@@ -820,15 +881,15 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           return _passwordError;
                         }
                         if (value == null || value.isEmpty) {
-                          return 'Cannot be empty';
+                          return l.t('register_confirm_password_required');
                         }
                         if (value.length < 8) {
-                          return 'Password must be at least 8 characters';
+                          return l.t('register_password_min');
                         }
                         final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
                         final hasNumber = RegExp(r'[0-9]').hasMatch(value);
                         if (!hasLetter || !hasNumber) {
-                          return 'Password must contain letters and numbers';
+                          return l.t('register_password_pattern');
                         }
                         return null;
                       },
@@ -836,7 +897,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     const SizedBox(height: 20),
                     _buildModernTextField(
                       controller: _confirmPasswordController,
-                      labelText: 'Confirm New Password',
+                      labelText: l.t('confirm_new_password'),
                       icon: Icons.lock_outline,
                       obscureText: _obscureConfirmPassword,
                       errorText: null,
@@ -854,17 +915,19 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Cannot be empty';
+                          return l.t('register_confirm_password_required');
                         }
                         if (value != _newPasswordController.text) {
-                          return 'Passwords do not match';
+                          return l.t('register_confirm_password_mismatch');
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 30),
                     _buildGradientButton(
-                      text: _isLoading ? 'Resetting...' : 'Reset Password',
+                      text: _isLoading
+                          ? l.t('forgot_password_resetting')
+                          : l.t('forgot_password_reset_password'),
                       onPressed: _isLoading ? null : _resetPassword,
                     ),
                   ],
@@ -872,10 +935,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   const SizedBox(height: 20),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Back to Login',
-                      style: TextStyle(
-                        color: const Color(0xFF6B4423),
+                    child: Text(
+                      l.t('forgot_password_back_to_login'),
+                      style: const TextStyle(
+                        color: Color(0xFF6B4423),
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
                       ),
@@ -1119,6 +1182,31 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+      ),
+    );
+  }
+
+  Widget _buildLangChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6B4423) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF6B4423),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }

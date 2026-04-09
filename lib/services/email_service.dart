@@ -56,6 +56,7 @@ class EmailService {
     required String toEmail,
     required String
     otp, // This parameter is kept for compatibility but won't be used
+    String languageCode = 'en',
   }) async {
     // #region agent log
     _debugLog('email_service.dart:8', 'EmailService.sendOTPEmail called', {
@@ -73,11 +74,52 @@ class EmailService {
       // Configure EmailOTP with SMTP settings (matching working example)
       EmailOTP.config(
         appEmail: "noreply@hqapp.com",
-        appName: "Heritage Quest",
+        appName: languageCode == 'ar' ? "Heritage Quest" : "Heritage Quest",
         otpLength: 4,
         emailTheme: EmailTheme.v4,
         otpType: OTPType.numeric,
       );
+
+      // Localized email template (English / Arabic)
+      if (languageCode == 'ar') {
+        EmailOTP.setTemplate(
+          template: '''
+          <div dir="rtl" style="background:#f5f5f5;padding:24px;font-family:Arial,Helvetica,sans-serif;">
+            <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #eee;">
+              <h2 style="margin:0 0 12px 0;color:#6B4423;">{{appName}}</h2>
+              <p style="margin:0 0 16px 0;color:#333;font-size:15px;line-height:1.6;">
+                رمز التحقق الخاص بك هو:
+              </p>
+              <div style="font-size:28px;font-weight:700;letter-spacing:6px;color:#111;background:#faf7f3;border:1px solid #e8ddd2;border-radius:10px;padding:14px;text-align:center;">
+                {{otp}}
+              </div>
+              <p style="margin:16px 0 0 0;color:#666;font-size:13px;line-height:1.6;">
+                إذا لم تطلب هذا الرمز، يمكنك تجاهل هذه الرسالة.
+              </p>
+            </div>
+          </div>
+          ''',
+        );
+      } else {
+        EmailOTP.setTemplate(
+          template: '''
+          <div style="background:#f5f5f5;padding:24px;font-family:Arial,Helvetica,sans-serif;">
+            <div style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:12px;padding:24px;border:1px solid #eee;">
+              <h2 style="margin:0 0 12px 0;color:#6B4423;">{{appName}}</h2>
+              <p style="margin:0 0 16px 0;color:#333;font-size:15px;line-height:1.6;">
+                Your verification code is:
+              </p>
+              <div style="font-size:28px;font-weight:700;letter-spacing:6px;color:#111;background:#faf7f3;border:1px solid #e8ddd2;border-radius:10px;padding:14px;text-align:center;">
+                {{otp}}
+              </div>
+              <p style="margin:16px 0 0 0;color:#666;font-size:13px;line-height:1.6;">
+                If you didn’t request this code, you can ignore this email.
+              </p>
+            </div>
+          </div>
+          ''',
+        );
+      }
 
       // Configure SMTP settings (matching working example)
       EmailOTP.setSMTP(

@@ -6,11 +6,13 @@ void main() async{
 
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
-  runApp(const MaterialApp(
+  
+  runApp(MaterialApp(
     title: "Heritage Quest",
     debugShowCheckedModeBanner: false,
-    home: LoginScreen(),
+    theme: ThemeData(
+      brightness: Brightness.light, // force light mode
+    ),
+    home: const LoginScreen(),
   ));
 }
-

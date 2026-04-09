@@ -65,6 +65,9 @@ dependencies:
 
   email_otp: ^3.0.2
 
+  # Charts
+  fl_chart: ^0.69.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

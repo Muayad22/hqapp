@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class FeedbackFormScreen extends StatefulWidget {
   final UserProfile user;
@@ -23,6 +24,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
   }
 
   Future<void> _submit() async {
+    final l = AppLocalizations.of(context);
     if (!_formKey.currentState!.validate()) return;
     setState(() => _submitting = true);
     try {
@@ -32,13 +34,13 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Feedback submitted. Thank you!')),
+        SnackBar(content: Text(l.t('feedback_submitted'))),
       );
       Navigator.pop(context);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unable to submit feedback right now.')),
+        SnackBar(content: Text(l.t('feedback_submit_failed'))),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -47,11 +49,12 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Feedback',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('feedback_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -66,7 +69,7 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Share your suggestions to improve the experience.',
+                l.t('feedback_prompt'),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: Colors.grey[700]),
@@ -76,14 +79,14 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                 controller: _messageController,
                 minLines: 6,
                 maxLines: 8,
-                decoration: const InputDecoration(
-                  labelText: 'Your Feedback',
+                decoration: InputDecoration(
+                  labelText: l.t('feedback_label'),
                   alignLabelWithHint: true,
-                  border: OutlineInputBorder(),
+                  border: const OutlineInputBorder(),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Feedback cannot be empty';
+                    return l.t('feedback_empty_error');
                   }
                   return null;
                 },
@@ -97,7 +100,11 @@ class _FeedbackFormScreenState extends State<FeedbackFormScreen> {
                     backgroundColor: const Color(0xFF6B4423),
                     foregroundColor: Colors.white,
                   ),
-                  child: Text(_submitting ? 'Submitting...' : 'Submit'),
+                  child: Text(
+                    _submitting
+                        ? l.t('feedback_submitting')
+                        : l.t('feedback_submit'),
+                  ),
                 ),
               ),
             ],
