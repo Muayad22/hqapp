@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class AchievementsScreen extends StatefulWidget {
   final UserProfile user;
@@ -15,6 +16,15 @@ class AchievementsScreen extends StatefulWidget {
 class _AchievementsScreenState extends State<AchievementsScreen> {
   List<Map<String, dynamic>> _achievements = [];
   bool _isLoading = true;
+
+  Map<String, String> _achievementText(int id) {
+    final lang = AppLocalizations.currentLanguageCode;
+    final l = AppLocalizations(lang);
+    return {
+      'title': l.t('achievement_${id}_title'),
+      'description': l.t('achievement_${id}_desc'),
+    };
+  }
 
   @override
   void initState() {
@@ -71,96 +81,84 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     return [
       {
         'id': 1,
-        'title': 'First Quiz',
-        'description': 'Complete your first quiz',
+        ..._achievementText(1),
         'icon': '🎯',
         'unlocked': hasFirstQuiz,
         'points': 50,
       },
       {
         'id': 2,
-        'title': 'Perfect Score',
-        'description': 'Get full marks in a quiz',
+        ..._achievementText(2),
         'icon': '🏆',
         'unlocked': hasFullMark,
         'points': 100,
       },
       {
         'id': 3,
-        'title': 'Quiz Master',
-        'description': 'Complete 5 quizzes',
+        ..._achievementText(3),
         'icon': '📚',
         'unlocked': quizCount >= 5,
         'points': 150,
       },
       {
         'id': 4,
-        'title': 'History Expert',
-        'description': 'Complete 10 quizzes',
+        ..._achievementText(4),
         'icon': '🎓',
         'unlocked': quizCount >= 10,
         'points': 250,
       },
       {
         'id': 5,
-        'title': 'Flawless Victory',
-        'description': 'Get perfect score in 5-question quiz',
+        ..._achievementText(5),
         'icon': '⭐',
         'unlocked': hasPerfectScore,
         'points': 200,
       },
       {
         'id': 6,
-        'title': 'Dedicated Learner',
-        'description': 'Complete 20 quizzes',
+        ..._achievementText(6),
         'icon': '🌟',
         'unlocked': quizCount >= 20,
         'points': 300,
       },
       {
         'id': 7,
-        'title': 'Speed Demon',
-        'description': 'Complete 3 quizzes in one day',
+        ..._achievementText(7),
         'icon': '⚡',
         'unlocked': false, // Would need to track daily quiz count
         'points': 175,
       },
       {
         'id': 8,
-        'title': 'Heritage Scholar',
-        'description': 'Complete 30 quizzes',
+        ..._achievementText(8),
         'icon': '🎖️',
         'unlocked': quizCount >= 30,
         'points': 400,
       },
       {
         'id': 9,
-        'title': 'Perfect Streak',
-        'description': 'Get 3 perfect scores in a row',
+        ..._achievementText(9),
         'icon': '🔥',
         'unlocked': consecutivePerfect >= 3,
         'points': 350,
       },
       {
         'id': 10,
-        'title': 'Master Explorer',
-        'description': 'Complete 50 quizzes',
+        ..._achievementText(10),
         'icon': '👑',
         'unlocked': quizCount >= 50,
         'points': 500,
       },
       {
         'id': 11,
-        'title': 'Quick Thinker',
-        'description': 'Complete a quiz in under 2 minutes',
+        ..._achievementText(11),
         'icon': '⏱️',
         'unlocked': false, // Would need to track quiz time
         'points': 125,
       },
       {
         'id': 12,
-        'title': 'Consistent Performer',
-        'description': 'Complete 7 quizzes in a week',
+        ..._achievementText(12),
         'icon': '📅',
         'unlocked': false, // Would need to track weekly quiz count
         'points': 275,
@@ -170,12 +168,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     if (widget.user.id == 'guest') {
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Achievements',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          title: Text(
+            l.t('achievements_title'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
           backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
@@ -191,14 +191,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 Icon(Icons.lock, size: 80, color: Colors.grey[400]),
                 const SizedBox(height: 24),
                 Text(
-                  'Login Required',
+                  l.t('notifications_login_required'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'You need to login to access the achievement page.',
+                  l.t('achievements_login_required_message'),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
@@ -211,7 +211,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     );
                   },
                   icon: const Icon(Icons.login),
-                  label: const Text('Login'),
+                  label: Text(l.t('quiz_login_button')),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -229,9 +229,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Achievements',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          title: Text(
+            l.t('achievements_title'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
           backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
@@ -244,7 +244,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Achievements'),
+        title: Text(l.t('achievements_title')),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
         actions: [
@@ -254,7 +254,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               setState(() => _isLoading = true);
               _loadAchievements();
             },
-            tooltip: 'Refresh',
+            tooltip: l.t('achievements_refresh'),
           ),
         ],
       ),
@@ -270,12 +270,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   children: [
                     // Header
                     Text(
-                      'Your Achievements',
+                      l.t('achievements_your_achievements'),
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Unlock achievements to earn points and show off your heritage exploration skills!',
+                      l.t('achievements_header_message'),
                       style: Theme.of(
                         context,
                       ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
@@ -287,13 +287,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       children: [
                         Expanded(
                           child: _buildStatCard(
-                            'Unlocked',
+                            l.t('achievements_unlocked'),
                             _achievements.where((a) => a['unlocked']).isNotEmpty
                                 ? _achievements
                                       .where((a) => a['unlocked'])
                                       .length
                                       .toString()
-                                : 'Start playing!',
+                                : l.t('achievements_start_playing'),
                             Icons.check_circle,
                             Colors.green,
                           ),
@@ -301,7 +301,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: _buildStatCard(
-                            'Total Points',
+                            l.t('achievements_total_points'),
                             _achievements
                                         .where((a) => a['unlocked'])
                                         .fold(
@@ -317,7 +317,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                                         (sum, a) => sum + (a['points'] as int),
                                       )
                                       .toString()
-                                : 'Earn points!',
+                                : l.t('achievements_earn_points'),
                             Icons.stars,
                             Colors.amber,
                           ),
@@ -380,6 +380,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
   Widget _buildAchievementCard(Map<String, dynamic> achievement) {
     final isUnlocked = achievement['unlocked'] as bool;
+    final l = AppLocalizations.of(context);
 
     return Card(
       child: Container(
@@ -465,7 +466,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '${achievement['points']} pts',
+                  '${achievement['points']} ${l.t('achievements_points_suffix')}',
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
+import 'dart:io';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/models/notification_entry.dart';
 import 'package:hqapp/screens/achievements_screen.dart';
@@ -9,7 +11,9 @@ import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/screens/notifications_screen.dart';
 import 'package:hqapp/screens/quiz_screen.dart';
 import 'package:hqapp/screens/map_tracking_screen.dart';
+import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserProfile user;
@@ -24,10 +28,32 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   late UserProfile _user;
 
+  final GlobalKey qrKey = GlobalKey(debugLabel: 'QR');
+  Barcode? result;
+  QRViewController? controller;
+  bool screenOpen = false;
+
+  @override
+  void reassemble() {
+    super.reassemble();
+    if (Platform.isAndroid) {
+      controller?.pauseCamera();
+    } else if (Platform.isIOS) {
+      controller?.resumeCamera();
+    }
+  }
+
+  @override
+  void dispose() {
+    controller?.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
     _user = widget.user;
+    screenOpen = false;
   }
 
   void _onItemTapped(int index) {
@@ -73,6 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _editAccount() async {
+    final l = AppLocalizations.of(context);
     final nameController = TextEditingController(text: _user.fullName);
     final contactController = TextEditingController(text: _user.contactNo);
 
@@ -92,18 +119,18 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Edit Account',
+                l.t('edit_account'),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(labelText: 'Full Name'),
+                decoration: InputDecoration(labelText: l.t('full_name')),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: contactController,
-                decoration: const InputDecoration(labelText: 'Mobile Number'),
+                decoration: InputDecoration(labelText: l.t('mobile_number')),
               ),
               const SizedBox(height: 24),
               SizedBox(
@@ -116,7 +143,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                     Navigator.pop(context, 'save');
                   },
-                  child: const Text('Save'),
+                  child: Text(l.t('save')),
                 ),
               ),
               const SizedBox(height: 12),
@@ -125,9 +152,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => Navigator.pop(context, 'changePassword'),
                   icon: const Icon(Icons.lock, color: const Color(0xFF6B4423)),
-                  label: const Text(
-                    'Change Password',
-                    style: TextStyle(color: const Color(0xFF6B4423)),
+                  label: Text(
+                    l.t('change_password'),
+                    style: const TextStyle(color: Color(0xFF6B4423)),
                   ),
                   style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: Color(0xFF6B4423)),
@@ -149,10 +176,10 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _user = updated);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully'),
+          SnackBar(
+            content: Text(l.t('profile_updated_success')),
             backgroundColor: const Color(0xFF2E7D32),
-            duration: Duration(seconds: 3),
+            duration: const Duration(seconds: 3),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -177,8 +204,9 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
+          final l = AppLocalizations.of(context);
           return AlertDialog(
-            title: const Text('Change Password'),
+            title: Text(l.t('change_password')),
             content: SingleChildScrollView(
               child: Form(
                 key: formKey,
@@ -193,7 +221,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           controller: oldPasswordController,
                           obscureText: obscureOldPassword,
                           decoration: InputDecoration(
-                            labelText: 'Current Password',
+                            labelText: l.t('current_password'),
                             prefixIcon: const Icon(Icons.lock_outline),
                             suffixIcon: IconButton(
                               icon: Icon(
@@ -231,7 +259,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               return currentPasswordError;
                             }
                             if (value == null || value.isEmpty) {
-                              return 'Please enter your current password';
+                              return l.t('enter_current_password');
                             }
                             return null;
                           },
@@ -251,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: newPasswordController,
                       obscureText: obscureNewPassword,
                       decoration: InputDecoration(
-                        labelText: 'New Password',
+                        labelText: l.t('new_password'),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -268,10 +296,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your new password';
+                          return l.t('enter_new_password');
                         }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                        if (value.length < 8) {
+                          return l.t('password_requirements_min8');
                         }
                         // Check if password contains at least one letter
                         final hasLetter = RegExp(r'[a-zA-Z]').hasMatch(value);
@@ -279,10 +307,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         final hasNumber = RegExp(r'[0-9]').hasMatch(value);
 
                         if (!hasLetter) {
-                          return 'Password must contain at least one letter';
+                          return l.t('password_requirements_letter');
                         }
                         if (!hasNumber) {
-                          return 'Password must contain at least one number';
+                          return l.t('password_requirements_number');
                         }
                         return null;
                       },
@@ -292,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: confirmPasswordController,
                       obscureText: obscureConfirmPassword,
                       decoration: InputDecoration(
-                        labelText: 'Confirm New Password',
+                        labelText: l.t('confirm_new_password'),
                         prefixIcon: const Icon(Icons.lock_outline),
                         suffixIcon: IconButton(
                           icon: Icon(
@@ -310,10 +338,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please confirm your new password';
+                          return l.t('confirm_new_password_prompt');
                         }
                         if (value != newPasswordController.text) {
-                          return 'Passwords do not match';
+                          return l.t('passwords_do_not_match');
                         }
                         return null;
                       },
@@ -325,7 +353,7 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               TextButton(
                 onPressed: isLoading ? null : () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: Text(l.t('cancel')),
               ),
               ElevatedButton(
                 onPressed: isLoading
@@ -338,10 +366,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         // Additional validation for password requirements
                         if (newPassword.length < 6) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Password must be at least 6 characters',
-                              ),
+                            SnackBar(
+                              content: Text(l.t('password_requirements_min6')),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -357,10 +383,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         if (!hasLetter) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Password must contain at least one letter',
-                              ),
+                            SnackBar(
+                              content: Text(l.t('password_requirements_letter')),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -369,10 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         if (!hasNumber) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Password must contain at least one number',
-                              ),
+                            SnackBar(
+                              content: Text(l.t('password_requirements_number')),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -381,8 +403,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         if (newPassword != confirmPasswordController.text) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Passwords do not match'),
+                            SnackBar(
+                              content: Text(l.t('passwords_do_not_match')),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -402,10 +424,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Password changed successfully'),
+                            SnackBar(
+                              content: Text(l.t('password_changed_success')),
                               backgroundColor: const Color(0xFF2E7D32),
-                              duration: Duration(seconds: 3),
+                              duration: const Duration(seconds: 3),
                               behavior: SnackBarBehavior.floating,
                             ),
                           );
@@ -420,7 +442,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                 error.message.toLowerCase().contains(
                                   'incorrect',
                                 )) {
-                              currentPasswordError = error.message;
+                              currentPasswordError = AppLocalizations.localizeError(
+                                context,
+                                error.message,
+                              );
                             }
                           });
                           // Trigger validation to show error below field
@@ -431,7 +456,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Error changing password: ${e.toString()}',
+                                AppLocalizations.of(context).t(
+                                  'change_password_error',
+                                  params: {'error': e.toString()},
+                                ),
                               ),
                               backgroundColor: Colors.red,
                             ),
@@ -444,7 +472,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Change Password'),
+                    : Text(l.t('change_password')),
               ),
             ],
           );
@@ -454,6 +482,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHomeContent() {
+    final l = AppLocalizations.of(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -536,8 +566,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Text(
                               _user.id == 'guest'
-                                  ? 'Welcome, Guest!'
-                                  : 'Welcome, ${_user.fullName}!',
+                                  ? l.t('welcome_guest')
+                                  : l.t(
+                                      'welcome_user',
+                                      params: {'name': _user.fullName},
+                                    ),
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -547,7 +580,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'Scan, Explore, Earn',
+                              l.t('scan_explore_earn'),
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -627,9 +660,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: const Color(0xFFB8860B),
                             ),
                             const SizedBox(width: 8),
-                            const Text(
-                              'Stats',
-                              style: TextStyle(
+                            Text(
+                              l.t('home_leaderboard_stats'),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -641,10 +674,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Expanded(
                               child: _buildStatItem(
-                                'Points',
+                                l.t('home_points'),
                                 totalPoints > 0
                                     ? totalPoints.toString()
-                                    : 'Earn points!',
+                                    : l.t('home_earn_points'),
                                 Icons.stars,
                                 const Color(0xFFB8860B),
                               ),
@@ -656,8 +689,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             Expanded(
                               child: _buildStatItem(
-                                'Rank',
-                                userRank > 0 ? '#$userRank' : 'Start playing!',
+                                l.t('home_rank'),
+                                userRank > 0
+                                    ? '#$userRank'
+                                    : l.t('home_start_playing'),
                                 Icons.leaderboard,
                                 const Color(0xFF6B4423),
                               ),
@@ -680,9 +715,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Keep playing quizzes to unlock more achievements and improve your ranking!',
-                                  style: TextStyle(
-                                    color: const Color(0xFF6B4423),
+                                  l.t('home_stats_hint'),
+                                  style: const TextStyle(
+                                    color: Color(0xFF6B4423),
                                     fontSize: 13,
                                   ),
                                 ),
@@ -709,29 +744,29 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               _buildDashboardCard(
                 icon: Icons.quiz,
-                title: 'Nizwa Castle Quiz',
-                subtitle: 'Test your knowledge about Nizwa Castle',
+                title: l.t('home_quiz_title'),
+                subtitle: l.t('home_quiz_subtitle'),
                 color: const Color(0xFF6B4423),
                 onTap: _goToQuiz,
               ),
               _buildDashboardCard(
                 icon: Icons.map,
-                title: 'Map',
-                subtitle: 'Track your location',
+                title: l.t('home_map_title'),
+                subtitle: l.t('home_map_subtitle'),
                 color: const Color(0xFF8B4513),
                 onTap: _openMap,
               ),
               _buildDashboardCard(
                 icon: Icons.emoji_events,
-                title: 'Leaderboard',
-                subtitle: 'Track your progress and compete',
+                title: l.t('home_leaderboard_title'),
+                subtitle: l.t('home_leaderboard_subtitle'),
                 color: const Color(0xFFB8860B),
                 onTap: _goToLeaderboard,
               ),
               _buildDashboardCard(
                 icon: Icons.workspace_premium,
-                title: 'Achievements',
-                subtitle: 'Unlock badges and earn rewards',
+                title: l.t('home_achievements_title'),
+                subtitle: l.t('home_achievements_subtitle'),
                 color: const Color(0xFF2E7D32),
                 onTap: _goToAchievements,
               ),
@@ -807,6 +842,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildProfileContent() {
+    final l = AppLocalizations.of(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -818,6 +855,49 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLangChip(
+                            label: 'EN',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'en',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('en');
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          _buildLangChip(
+                            label: 'ع',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'ar',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('ar');
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   Row(
                     children: [
                       CircleAvatar(
@@ -854,7 +934,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
                   _buildInfoRow(
-                    'Mobile',
+                    l.t('mobile'),
                     _user.contactNo.isEmpty ? '-' : _user.contactNo,
                   ),
                   const SizedBox(height: 24),
@@ -863,12 +943,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: _user.id == 'guest' ? null : _editAccount,
-                          child: const Text('Edit Account'),
+                          child: Text(l.t('edit_account')),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: OutlinedButton(
+                        child: ElevatedButton(
                           onPressed: () {
                             Navigator.push(
                               context,
@@ -877,9 +957,26 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             );
                           },
-                          child: const Text('Feedback'),
+                          child: Text(l.t('feedback')),
                         ),
                       ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => Tutorialpage(user: _user),
+                              ),
+                                  (route) => false,
+                            );
+                          },
+                          child: Text(l.t('tutorial')),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -889,9 +986,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _logout,
                       icon: const Icon(Icons.logout, color: Colors.white),
-                      label: const Text(
-                        'Logout',
-                        style: TextStyle(
+                      label: Text(
+                        l.t('logout'),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -938,6 +1035,31 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildLangChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6B4423) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF6B4423),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildStatItem(
     String label,
     String value,
@@ -963,69 +1085,36 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildScanContent() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 240,
-              height: 240,
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.grey[400]!, width: 4),
-              ),
-              child: Icon(
-                Icons.qr_code_scanner,
-                color: Colors.grey[500],
-                size: 72,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'QR Code Scanner',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.orange[50],
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange[200]!),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.info_outline, color: Colors.orange[700]),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Not available yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.orange[900],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'QR code scanning feature is coming soon!',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[600], fontSize: 14),
-            ),
-          ],
+    final l = AppLocalizations.of(context);
+    return Column(
+      children: <Widget>[
+        Expanded(
+          flex: 5,
+          child: QRView(key: qrKey, onQRViewCreated: _onQRViewCreated),
         ),
-      ),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: _buildGradientButton(
+                onPressed: () {
+                  setState(() {
+                    screenOpen = false;
+                  });
+                  controller?.resumeCamera();
+                },
+                text: l.t('qr_scan_again'),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final pages = [
       _buildHomeContent(),
       _buildScanContent(),
@@ -1035,9 +1124,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text(
-          'Heritage Quest',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('app_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -1120,25 +1209,86 @@ class _HomeScreenState extends State<HomeScreen> {
           unselectedItemColor: Colors.grey[400],
           backgroundColor: Colors.white,
           elevation: 0,
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: l.t('home_tab_home'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.qr_code_scanner_outlined),
-              activeIcon: Icon(Icons.qr_code_scanner),
-              label: 'Scan',
+              icon: const Icon(Icons.qr_code_scanner_outlined),
+              activeIcon: const Icon(Icons.qr_code_scanner),
+              label: l.t('home_tab_scan'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_outline),
-              activeIcon: Icon(Icons.person),
-              label: 'Profile',
+              icon: const Icon(Icons.person_outline),
+              activeIcon: const Icon(Icons.person),
+              label: l.t('home_tab_profile'),
             ),
           ],
         ),
       ),
     );
   }
+
+  //Function for the scan page
+  void _onQRViewCreated(QRViewController controller) {
+    this.controller = controller;
+    controller.scannedDataStream.listen((scanData) {
+      setState(() {
+        result = scanData;
+        if (!screenOpen && result?.code != null) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => FoundCodeScreen(value: result),
+            ),
+          );
+          controller.pauseCamera();
+          screenOpen = true;
+        }
+      });
+    });
+  }
+
+  //building gradiant button for the scan page
+  Widget _buildGradientButton({required String text, VoidCallback? onPressed}) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
+        ),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6B4423).withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+
+
 }

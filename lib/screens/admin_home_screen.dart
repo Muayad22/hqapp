@@ -1,15 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/admin_feedback_screen.dart';
+import 'package:hqapp/screens/admin_analytics_charts_screen.dart';
 import 'package:hqapp/screens/leaderboard_screen.dart';
 import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/screens/manage_users_screen.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
-class AdminHomeScreen extends StatelessWidget {
+class AdminHomeScreen extends StatefulWidget {
   final UserProfile user;
 
   const AdminHomeScreen({super.key, required this.user});
 
+  @override
+  State<AdminHomeScreen> createState() => _AdminHomeScreenState();
+}
+
+class _AdminHomeScreenState extends State<AdminHomeScreen> {
   void _logout(BuildContext context) {
     Navigator.pushAndRemoveUntil(
       context,
@@ -18,23 +25,87 @@ class AdminHomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildLangChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6B4423) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: const Color(0xFF6B4423).withOpacity(0.25),
+            width: 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF6B4423),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final user = widget.user;
     return Scaffold(
       appBar: AppBar(
-        title: Text('${'Heritage Quest'} Admin'),
+        title: Text(l.t('admin_title', params: {'app': l.t('app_title')})),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF6B4423),
         elevation: 0,
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildLangChip(
+                  label: 'EN',
+                  isSelected: AppLocalizations.currentLanguageCode == 'en',
+                  onTap: () =>
+                      setState(() => AppLocalizations.setLanguage('en')),
+                ),
+                const SizedBox(width: 4),
+                _buildLangChip(
+                  label: 'ع',
+                  isSelected: AppLocalizations.currentLanguageCode == 'ar',
+                  onTap: () =>
+                      setState(() => AppLocalizations.setLanguage('ar')),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
             child: ElevatedButton.icon(
               onPressed: () => _logout(context),
               icon: const Icon(Icons.logout, color: Colors.white, size: 20),
-              label: const Text(
-                'Logout',
-                style: TextStyle(
+              label: Text(
+                l.t('logout'),
+                style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),
@@ -135,7 +206,10 @@ class AdminHomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Welcome, ${user.fullName}',
+                                l.t(
+                                  'admin_welcome',
+                                  params: {'name': user.fullName},
+                                ),
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -145,7 +219,7 @@ class AdminHomeScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Keep the heritage community engaged',
+                                l.t('admin_subtitle'),
                                 style: TextStyle(
                                   color: Colors.grey[600],
                                   fontSize: 14,
@@ -171,8 +245,8 @@ class AdminHomeScreen extends StatelessWidget {
                 children: [
                   _AdminCard(
                     icon: Icons.group,
-                    title: 'Manage Users',
-                    subtitle: 'See all users and delete accounts',
+                    title: l.t('admin_manage_users'),
+                    subtitle: l.t('admin_manage_users_subtitle'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -181,9 +255,20 @@ class AdminHomeScreen extends StatelessWidget {
                     ),
                   ),
                   _AdminCard(
+                    icon: Icons.pie_chart,
+                    title: l.t('admin_analytics_title'),
+                    subtitle: l.t('admin_analytics_subtitle'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AdminAnalyticsChartsScreen(),
+                      ),
+                    ),
+                  ),
+                  _AdminCard(
                     icon: Icons.feedback,
-                    title: 'Check Feedback',
-                    subtitle: 'Review suggestions from visitors',
+                    title: l.t('admin_check_feedback'),
+                    subtitle: l.t('admin_check_feedback_subtitle'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -193,8 +278,8 @@ class AdminHomeScreen extends StatelessWidget {
                   ),
                   _AdminCard(
                     icon: Icons.emoji_events,
-                    title: 'Check Leaderboard',
-                    subtitle: 'Monitor quiz performances',
+                    title: l.t('admin_check_leaderboard'),
+                    subtitle: l.t('admin_check_leaderboard_subtitle'),
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   const MapTrackingScreen({super.key});
@@ -12,12 +13,14 @@ class MapTrackingScreen extends StatefulWidget {
 class _MapTrackingScreenState extends State<MapTrackingScreen> {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text(
-          'Map',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('map_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -51,8 +54,8 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       'lib/dependencies/images/fullMap.png',
                       filterQuality: FilterQuality.high,
                       errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Text('Image not found: fullMap.png'),
+                        return Center(
+                          child: Text(l.t('map_image_not_found')),
                         );
                       },
                     ),
@@ -67,7 +70,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                     MaterialPageRoute(builder: (context) => const QrCode()),
                   );
                 },
-                text: "Find your current location",
+                text: l.t('map_find_location_button'),
               ),
             ],
           ),
@@ -151,11 +154,12 @@ class _QrCodeState extends State<QrCode> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'QR Scanner',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('qr_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -179,7 +183,7 @@ class _QrCodeState extends State<QrCode> {
                     });
                     controller?.resumeCamera();
                   },
-                  text: "Scan Again",
+                  text: l.t('qr_scan_again'),
                 ),
               ),
             ),
@@ -258,12 +262,13 @@ class FoundCodeScreen extends StatefulWidget {
 class _FoundCodeScreenState extends State<FoundCodeScreen> {
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text(
-          'Your Location',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('qr_location_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -298,12 +303,16 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                             'lib/dependencies/images/${widget.value!.code}.png',
                             filterQuality: FilterQuality.high,
                             errorBuilder: (context, error, stackTrace) {
-                              return const Center(
-                                child: Text('Location image not found'),
+                              return Center(
+                                child: Text(
+                                  l.t('qr_location_image_not_found'),
+                                ),
                               );
                             },
                           )
-                        : const Center(child: Text('No location image found')),
+                        : Center(
+                            child: Text(l.t('qr_no_location_image')),
+                          ),
                   ),
                 ),
               ),

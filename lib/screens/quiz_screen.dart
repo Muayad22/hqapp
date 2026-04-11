@@ -5,6 +5,7 @@ import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/services/quiz_service.dart';
 import 'package:hqapp/utils/animations.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class QuizScreen extends StatefulWidget {
   final UserProfile user;
@@ -153,6 +154,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     if (_resultSaved || widget.user.id == 'guest') return;
 
     try {
+      final l = AppLocalizations.of(context);
       // Save quiz result
       await FirestoreService.recordQuizResult(
         user: widget.user,
@@ -184,15 +186,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (quizCount == 1) {
         await FirestoreService.createNotification(
           userId: widget.user.id,
-          title: '🎯 Achievement Unlocked: First Quiz!',
-          message:
-              'You completed your first quiz! Keep exploring to unlock more achievements.',
+          title: l.t('achievement_unlocked_first_quiz_title'),
+          message: l.t('achievement_unlocked_first_quiz_message'),
           type: 'achievement',
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('🎯 Achievement Unlocked: First Quiz!'),
+              content: Text(l.t('achievement_unlocked_first_quiz_title')),
               duration: const Duration(seconds: 3),
               backgroundColor: const Color(0xFF2E7D32),
             ),
@@ -203,14 +204,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (hasFullMark) {
         await FirestoreService.createNotification(
           userId: widget.user.id,
-          title: '🏆 Achievement Unlocked: Perfect Score!',
-          message: 'Amazing! You got full marks in the quiz!',
+          title: l.t('achievement_unlocked_perfect_score_title'),
+          message: l.t('achievement_unlocked_perfect_score_message'),
           type: 'achievement',
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('🏆 Achievement Unlocked: Perfect Score!'),
+              content: Text(l.t('achievement_unlocked_perfect_score_title')),
               duration: const Duration(seconds: 3),
               backgroundColor: const Color(0xFF2E7D32),
             ),
@@ -221,15 +222,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (quizCount == 5) {
         await FirestoreService.createNotification(
           userId: widget.user.id,
-          title: '📚 Achievement Unlocked: Quiz Master!',
-          message:
-              'Congratulations! You\'ve completed 5 quizzes. You\'re becoming a quiz master!',
+          title: l.t('achievement_unlocked_quiz_master_title'),
+          message: l.t('achievement_unlocked_quiz_master_message'),
           type: 'achievement',
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('📚 Achievement Unlocked: Quiz Master!'),
+              content: Text(l.t('achievement_unlocked_quiz_master_title')),
               duration: const Duration(seconds: 3),
               backgroundColor: const Color(0xFF2E7D32),
             ),
@@ -240,14 +240,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       if (hasPerfectScore) {
         await FirestoreService.createNotification(
           userId: widget.user.id,
-          title: '⭐ Achievement Unlocked: Flawless Victory!',
-          message: 'Incredible! You got a perfect score on a 5-question quiz!',
+          title: l.t('achievement_unlocked_flawless_victory_title'),
+          message: l.t('achievement_unlocked_flawless_victory_message'),
           type: 'achievement',
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('⭐ Achievement Unlocked: Flawless Victory!'),
+              content: Text(l.t('achievement_unlocked_flawless_victory_title')),
               duration: const Duration(seconds: 3),
               backgroundColor: const Color(0xFFDAA520),
             ),
@@ -256,18 +256,30 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       }
 
       // Create quiz completion notification
+      final suffix = hasFullMark
+          ? l.t('quiz_completed_suffix_perfect')
+          : l.t('quiz_completed_suffix_great');
       await FirestoreService.createNotification(
         userId: widget.user.id,
-        title: 'Quiz Completed!',
-        message:
-            'You scored $score out of ${questions.length}. ${hasFullMark ? "Perfect score!" : "Great job!"}',
+        title: l.t('quiz_completed_notification_title'),
+        message: l.t(
+          'quiz_completed_notification_message',
+          params: {
+            'score': score.toString(),
+            'total': questions.length.toString(),
+            'suffix': suffix,
+          },
+        ),
         type: 'quiz',
       );
     } catch (e) {
       if (!mounted) return;
+      final l = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error saving quiz result: $e'),
+          content: Text(
+            l.t('quiz_save_error', params: {'error': e.toString()}),
+          ),
           backgroundColor: const Color(0xFFC62828),
         ),
       );
@@ -299,13 +311,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     // Show login prompt for guest users
     if (widget.user.id == 'guest') {
       return Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Nizwa Castle Quiz',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          title: Text(
+            l.t('quiz_title'),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
           ),
           backgroundColor: const Color(0xFF6B4423),
           foregroundColor: Colors.white,
@@ -321,14 +334,14 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                 Icon(Icons.lock, size: 80, color: Colors.grey[400]),
                 const SizedBox(height: 24),
                 Text(
-                  'Login Required',
+                  l.t('notifications_login_required'),
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'You need to login to access the quiz page.',
+                  l.t('quiz_login_required_message'),
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
@@ -341,7 +354,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                     );
                   },
                   icon: const Icon(Icons.login),
-                  label: const Text('Login'),
+                  label: Text(l.t('quiz_login_button')),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
@@ -359,9 +372,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text(
-          'Nizwa Castle Quiz',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('quiz_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -373,8 +386,11 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildQuizContent() {
+    final l = AppLocalizations.of(context);
+    final lang = AppLocalizations.currentLanguageCode;
     final question = questions[currentQuestionIndex];
     final progress = (currentQuestionIndex + 1) / questions.length;
+    final options = question.optionsFor(lang);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -414,7 +430,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Score: $score',
+                          l.t(
+                            'quiz_score_label',
+                            params: {'value': score.toString()},
+                          ),
                           style: TextStyle(
                             color: const Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
@@ -547,7 +566,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        question.question,
+                        question.questionFor(lang),
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -557,7 +576,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(height: 32),
                       // Answer Options with Staggered Animation
-                      ...question.options.asMap().entries.map((entry) {
+                      ...options.asMap().entries.map((entry) {
                         final index = entry.key;
                         final option = entry.value;
                         final isCorrect = index == question.correctAnswerIndex;
@@ -621,7 +640,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                           ),
                                           const SizedBox(width: 8),
                                           Text(
-                                            'Explanation:',
+                                            l.t('quiz_explanation'),
                                             style: TextStyle(
                                               fontWeight: FontWeight.bold,
                                               fontSize: 16,
@@ -632,7 +651,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                                       ),
                                       const SizedBox(height: 12),
                                       Text(
-                                        question.explanation,
+                                        question.explanationFor(lang),
                                         style: TextStyle(
                                           color: const Color(0xFF6B4423),
                                           fontSize: 15,
@@ -674,8 +693,8 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                         children: [
                           Text(
                             currentQuestionIndex < questions.length - 1
-                                ? 'Next Question'
-                                : 'Finish Quiz',
+                                ? l.t('quiz_next_question')
+                                : l.t('quiz_finish_quiz'),
                             style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -809,6 +828,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   Widget _buildQuizComplete() {
+    final l = AppLocalizations.of(context);
     // Ensure questions list is not empty and calculate percentage safely
     final totalQuestions = questions.isNotEmpty ? questions.length : 5;
     if (totalQuestions == 0) {
@@ -1003,9 +1023,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             child: ElevatedButton.icon(
                               onPressed: _restartQuiz,
                               icon: const Icon(Icons.refresh, size: 24),
-                              label: const Text(
-                                'Try Again',
-                                style: TextStyle(
+                              label: Text(
+                                l.t('quiz_try_again'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1030,9 +1050,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                             child: OutlinedButton.icon(
                               onPressed: () => Navigator.pop(context),
                               icon: const Icon(Icons.home, size: 24),
-                              label: const Text(
-                                'Back to Home',
-                                style: TextStyle(
+                              label: Text(
+                                l.t('quiz_back_home'),
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -1107,9 +1127,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       child: ElevatedButton.icon(
                         onPressed: _restartQuiz,
                         icon: const Icon(Icons.refresh, size: 24),
-                        label: const Text(
-                          'Try Again',
-                          style: TextStyle(
+                        label: Text(
+                          l.t('quiz_try_again'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1130,9 +1150,9 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                       child: OutlinedButton.icon(
                         onPressed: () => Navigator.pop(context),
                         icon: const Icon(Icons.home, size: 24),
-                        label: const Text(
-                          'Back to Home',
-                          style: TextStyle(
+                        label: Text(
+                          l.t('quiz_back_home'),
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1160,14 +1180,10 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   String _getScoreMessage(int percentage) {
-    if (percentage >= 90) {
-      return 'Excellent! You are a Nizwa Castle expert! 🏆';
-    } else if (percentage >= 70) {
-      return 'Very Good! You have good knowledge about Nizwa Castle! 👍';
-    } else if (percentage >= 50) {
-      return 'Not bad! Learn more about Nizwa Castle! 📚';
-    } else {
-      return 'Try again! Discover more about Oman\'s heritage! 🏰';
-    }
+    final l = AppLocalizations.of(context);
+    if (percentage >= 90) return l.t('quiz_score_message_excellent');
+    if (percentage >= 70) return l.t('quiz_score_message_very_good');
+    if (percentage >= 50) return l.t('quiz_score_message_ok');
+    return l.t('quiz_score_message_try_again');
   }
 }

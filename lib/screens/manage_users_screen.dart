@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -11,15 +12,21 @@ class ManageUsersScreen extends StatefulWidget {
 
 class _ManageUsersScreenState extends State<ManageUsersScreen> {
   Future<void> _deleteUser(BuildContext context, UserProfile profile) async {
+    final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete user?'),
-        content: Text('Remove ${profile.fullName}? This cannot be undone.'),
+        title: Text(l.t('admin_delete_user_q')),
+        content: Text(
+          l.t(
+            'admin_delete_user_msg',
+            params: {'name': profile.fullName},
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l.t('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
@@ -27,7 +34,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('Delete'),
+            child: Text(l.t('admin_delete')),
           ),
         ],
       ),
@@ -38,31 +45,48 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(SnackBar(content: Text('${profile.fullName} removed')));
+    ).showSnackBar(
+      SnackBar(
+        content: Text(
+          l.t('admin_user_removed', params: {'name': profile.fullName}),
+        ),
+      ),
+    );
   }
 
   Future<void> _toggleAdminStatus(
     BuildContext context,
     UserProfile profile,
   ) async {
+    final l = AppLocalizations.of(context);
     final newStatus = !profile.isAdmin;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(newStatus ? 'Make Admin?' : 'Remove Admin?'),
+        title: Text(
+          newStatus ? l.t('admin_make_admin_q') : l.t('admin_remove_admin_q'),
+        ),
         content: Text(
           newStatus
-              ? 'Make ${profile.fullName} an administrator?'
-              : 'Remove administrator privileges from ${profile.fullName}?',
+              ? l.t(
+                  'admin_make_admin_msg',
+                  params: {'name': profile.fullName},
+                )
+              : l.t(
+                  'admin_remove_admin_msg',
+                  params: {'name': profile.fullName},
+                ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l.t('cancel')),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(newStatus ? 'Make Admin' : 'Remove Admin'),
+            child: Text(
+              newStatus ? l.t('admin_make_admin_btn') : l.t('admin_remove_admin_btn'),
+            ),
           ),
         ],
       ),
@@ -76,8 +100,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           SnackBar(
             content: Text(
               newStatus
-                  ? '${profile.fullName} is now an admin'
-                  : 'Admin privileges removed from ${profile.fullName}',
+                  ? l.t('admin_now_admin', params: {'name': profile.fullName})
+                  : l.t('admin_admin_removed', params: {'name': profile.fullName}),
             ),
           ),
         );
@@ -85,7 +109,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error updating user: $e'),
+            content: Text(
+              l.t('admin_update_user_error', params: {'error': e.toString()}),
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -95,11 +121,12 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Manage Users',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('admin_users_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -121,7 +148,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   Icon(Icons.error_outline, size: 48, color: Colors.red[300]),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading users',
+                    l.t('admin_users_error_title'),
                     style: TextStyle(fontSize: 16, color: Colors.grey[700]),
                   ),
                   const SizedBox(height: 8),
@@ -133,7 +160,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => setState(() {}),
-                    child: const Text('Retry'),
+                    child: Text(l.t('admin_retry')),
                   ),
                 ],
               ),
@@ -142,7 +169,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
           final users = snapshot.data ?? [];
           if (users.isEmpty) {
-            return const Center(child: Text('No users found.'));
+            return Center(child: Text(l.t('admin_no_users')));
           }
           return ListView.separated(
             padding: const EdgeInsets.all(16),
@@ -165,9 +192,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                     children: [
                       Text(profile.email),
                       Text(
-                        'Contact: ${profile.contactNo.isEmpty ? '-' : profile.contactNo}',
+                        '${l.t('admin_contact')}: ${profile.contactNo.isEmpty ? '-' : profile.contactNo}',
                       ),
-                      Text('Admin: ${profile.isAdmin ? 'Yes' : 'No'}'),
+                      Text(
+                        '${l.t('admin_admin')}: ${profile.isAdmin ? l.t('yes') : l.t('no')}',
+                      ),
                     ],
                   ),
                   trailing: Row(
@@ -182,8 +211,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         ),
                         onPressed: () => _toggleAdminStatus(context, profile),
                         tooltip: profile.isAdmin
-                            ? 'Remove Admin'
-                            : 'Make Admin',
+                            ? l.t('admin_remove_admin_btn')
+                            : l.t('admin_make_admin_btn'),
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),

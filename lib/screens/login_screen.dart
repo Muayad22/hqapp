@@ -5,6 +5,7 @@ import 'package:hqapp/screens/forgot_password_screen.dart';
 import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/screens/register_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -30,6 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _login() async {
+    final l = AppLocalizations.of(context);
     // Clear previous errors first
     setState(() {
       _emailError = null;
@@ -45,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final emailValue = _emailController.text.trim();
       if (emailValue.isEmpty) {
         setState(() {
-          _emailError = 'Email cannot be empty.';
+          _emailError = l.t('register_email_required');
         });
       } else {
         final emailPattern = RegExp(
@@ -53,15 +55,15 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         if (!emailPattern.hasMatch(emailValue)) {
           setState(() {
-            _emailError = 'Please enter a valid email like example@gmail.com';
+            _emailError = l.t('register_email_invalid');
           });
         } else if (!emailValue.toLowerCase().contains('.com')) {
           setState(() {
-            _emailError = 'Email must contain .com';
+            _emailError = l.t('register_email_invalid');
           });
         } else if (emailValue.contains('.@') || emailValue.contains('@.')) {
           setState(() {
-            _emailError = 'Please enter a valid email like example@gmail.com';
+            _emailError = l.t('register_email_invalid');
           });
         }
       }
@@ -70,11 +72,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final passwordValue = _passwordController.text;
       if (passwordValue.isEmpty) {
         setState(() {
-          _passwordError = 'Password cannot be empty.';
+          _passwordError = l.t('register_password_required');
         });
       } else if (passwordValue.length < 8) {
         setState(() {
-          _passwordError = 'Password must be at least 8 characters';
+          _passwordError = l.t('register_password_min');
         });
       }
 
@@ -112,16 +114,17 @@ class _LoginScreenState extends State<LoginScreen> {
           errorMessage.contains('not found')) {
         setState(() {
           // Set generic error message on both fields to show red glow
-          _emailError = 'Email or password is incorrect';
-          _passwordError = 'Email or password is incorrect';
+          _emailError = l.t('login_invalid_credentials');
+          _passwordError = l.t('login_invalid_credentials');
         });
         // Trigger validation to show the error
         _formKey.currentState!.validate();
       } else {
         // General error - show on both fields
         setState(() {
-          _emailError = error.message;
-          _passwordError = error.message;
+          final localized = AppLocalizations.localizeError(context, error.message);
+          _emailError = localized;
+          _passwordError = localized;
         });
         _formKey.currentState!.validate();
       }
@@ -130,7 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
       setState(() {
         _emailError = errorMessage.isEmpty
-            ? 'An error occurred. Please try again.'
+            ? l.t('register_generic_error')
             : errorMessage;
         _passwordError = null;
       });
@@ -163,6 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -184,6 +189,49 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.9),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildLangChip(
+                            label: 'EN',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'en',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('en');
+                              });
+                            },
+                          ),
+                          const SizedBox(width: 4),
+                          _buildLangChip(
+                            label: 'ع',
+                            isSelected:
+                                AppLocalizations.currentLanguageCode == 'ar',
+                            onTap: () {
+                              setState(() {
+                                AppLocalizations.setLanguage('ar');
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -219,8 +267,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Heritage Quest',
-                          style: const TextStyle(
+                          l.t('app_title'),
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: const Color(0xFF6B4423),
@@ -229,7 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Discover Oman\'s Rich Heritage',
+                          l.t('login_subtitle'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -242,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 40),
                   _buildModernTextField(
                     controller: _emailController,
-                    labelText: 'Email',
+                    labelText: l.t('email'),
                     icon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     errorText: _emailError,
@@ -254,30 +302,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Only validate when form is submitted (when login button is pressed)
                       // Don't validate while typing
                       if (value == null || value.isEmpty) {
-                        return 'Email cannot be empty.';
+                        return l.t('register_email_required');
                       }
                       // Better email validation - check format properly
                       final emailPattern = RegExp(
                         r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
                       );
                       if (!emailPattern.hasMatch(value)) {
-                        return 'Please enter a valid email like example@gmail.com';
+                        return l.t('register_email_invalid');
                       }
+                      /*
                       // Ensure it contains .com
                       if (!value.toLowerCase().contains('.com')) {
-                        return 'Email must contain .com';
+                        return l.t('register_email_invalid');
                       }
                       // Check that @ is not immediately before or after a dot
                       if (value.contains('.@') || value.contains('@.')) {
-                        return 'Please enter a valid email like example@gmail.com';
+                        return l.t('register_email_invalid');
                       }
+
+                       */
                       return null;
                     },
                   ),
                   const SizedBox(height: 20),
                   _buildModernTextField(
                     controller: _passwordController,
-                    labelText: 'Password',
+                    labelText: l.t('password'),
                     icon: Icons.lock_outline,
                     obscureText: _obscurePassword,
                     errorText: _passwordError,
@@ -297,10 +348,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         return _passwordError;
                       }
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return l.t('login_password_required');
                       }
                       if (value.length < 8) {
-                        return 'Password must be at least 8 characters';
+                        return l.t('register_password_min');
                       }
                       return null;
                     },
@@ -311,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       onPressed: _forgotPassword,
                       child: Text(
-                        'Forgot Password?',
+                        l.t('forgot_password'),
                         style: TextStyle(
                           color: const Color(0xFF6B4423),
                           fontWeight: FontWeight.w600,
@@ -321,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   _buildGradientButton(
-                    text: _isLoading ? 'Signing In...' : 'Login',
+                    text: _isLoading ? l.t('signing_in') : l.t('login_button'),
                     onPressed: _isLoading ? null : _login,
                   ),
                   const SizedBox(height: 30),
@@ -333,7 +384,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
-                          'or continue as',
+                          l.t('or_continue_as'),
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontWeight: FontWeight.w500,
@@ -347,7 +398,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 30),
                   _buildOutlinedButton(
-                    text: 'Continue as Guest',
+                    text: l.t('continue_as_guest'),
                     onPressed: _continueAsGuest,
                   ),
                   const SizedBox(height: 30),
@@ -355,15 +406,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Don\'t have an account? ',
+                        l.t('no_account'),
                         style: TextStyle(color: Colors.grey[600], fontSize: 16),
                       ),
                       TextButton(
                         onPressed: _goToRegister,
                         child: Text(
-                          'Create one',
+                          l.t('create_one'),
                           style: const TextStyle(
-                            color: const Color(0xFF6B4423),
+                            color: Color(0xFF6B4423),
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -564,6 +615,31 @@ class _LoginScreenState extends State<LoginScreen> {
           style: const TextStyle(
             color: const Color(0xFF6B4423),
             fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLangChip({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF6B4423) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color(0xFF6B4423),
             fontWeight: FontWeight.bold,
           ),
         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -39,11 +40,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Leaderboard',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        title: Text(
+          l.t('leaderboard_title'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
         backgroundColor: const Color(0xFF6B4423),
         foregroundColor: Colors.white,
@@ -57,7 +60,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search player...',
+                hintText: l.t('leaderboard_search_hint'),
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -87,7 +90,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Error loading leaderboard',
+                          l.t('leaderboard_error_title'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[700],
@@ -105,7 +108,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () => setState(() {}),
-                          child: const Text('Retry'),
+                          child: Text(l.t('leaderboard_retry')),
                         ),
                       ],
                     ),
@@ -134,7 +137,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'No players on leaderboard yet',
+                          l.t('leaderboard_empty_title'),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
@@ -142,7 +145,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Complete quizzes to earn points and appear here!',
+                          l.t('leaderboard_empty_message'),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[500],
@@ -192,14 +195,19 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                         ),
                         subtitle: Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.stars,
                               size: 16,
-                              color: const Color(0xFFB8860B),
+                              color: Color(0xFFB8860B),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '${entry.totalPoints} points',
+                              l.t(
+                                'leaderboard_points_label',
+                                params: {
+                                  'value': entry.totalPoints.toString(),
+                                },
+                              ),
                               style: TextStyle(
                                 color: Colors.grey[700],
                                 fontSize: 14,
