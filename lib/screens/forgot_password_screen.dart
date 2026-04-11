@@ -120,6 +120,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           setState(() {
             _emailError = l.t('register_email_invalid');
           });
+        } else if (!emailValue.toLowerCase().contains('.com')) {
+          setState(() {
+            _emailError = l.t('register_email_invalid');
+          });
+        } else if (emailValue.contains('.@') || emailValue.contains('@.')) {
+          setState(() {
+            _emailError = l.t('register_email_invalid');
+          });
 
         }
 

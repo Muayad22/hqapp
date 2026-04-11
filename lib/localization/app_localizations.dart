@@ -112,6 +112,7 @@ class AppLocalizations {
       'password_changed_success': 'Password changed successfully',
       'change_password_error': 'Error changing password: {error}',
       'password_requirements_min8': 'Password must be at least 8 characters',
+      'password_requirements_min6': 'Password must be at least 6 characters',
       'password_requirements_letter':
           'Password must contain at least one letter',
       'password_requirements_number':
@@ -442,8 +443,7 @@ class AppLocalizations {
       'confirm_new_password': 'تأكيد كلمة المرور الجديدة',
       'password_changed_success': 'تم تغيير كلمة المرور بنجاح',
       'change_password_error': 'حدث خطأ أثناء تغيير كلمة المرور: {error}',
-      'password_requirements_min6':
-          'يجب ألا تقل كلمة المرور عن 8 أحرف',
+      'password_requirements_min6':'يجب ألا تقل كلمة المرور عن 8 أحرف',
       'password_requirements_letter':
           'يجب أن تحتوي كلمة المرور على حرف واحد على الأقل',
       'password_requirements_number':
