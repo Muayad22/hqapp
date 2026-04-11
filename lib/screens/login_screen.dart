@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
-      if (user.isAdmin) {
+      if (user.hasStaffAccess) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => AdminHomeScreen(user: user)),

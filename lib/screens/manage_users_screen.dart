@@ -4,7 +4,9 @@ import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
 class ManageUsersScreen extends StatefulWidget {
-  const ManageUsersScreen({super.key});
+  final UserProfile viewer;
+
+  const ManageUsersScreen({super.key, required this.viewer});
 
   @override
   State<ManageUsersScreen> createState() => _ManageUsersScreenState();
@@ -59,15 +61,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     UserProfile profile,
   ) async {
     final l = AppLocalizations.of(context);
-    final newStatus = !profile.isAdmin;
+    final grantStaff = !profile.hasStaffAccess;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          newStatus ? l.t('admin_make_admin_q') : l.t('admin_remove_admin_q'),
+          grantStaff ? l.t('admin_make_admin_q') : l.t('admin_remove_admin_q'),
         ),
         content: Text(
-          newStatus
+          grantStaff
               ? l.t(
                   'admin_make_admin_msg',
                   params: {'name': profile.fullName},
@@ -85,7 +87,9 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             child: Text(
-              newStatus ? l.t('admin_make_admin_btn') : l.t('admin_remove_admin_btn'),
+              grantStaff
+                  ? l.t('admin_make_admin_btn')
+                  : l.t('admin_remove_admin_btn'),
             ),
           ),
         ],
@@ -94,14 +98,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
 
     if (confirm == true) {
       try {
-        await FirestoreService.updateUserAdminStatus(profile.id, newStatus);
+        await FirestoreService.updateUserAdminStatus(profile.id, grantStaff);
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              newStatus
+              grantStaff
                   ? l.t('admin_now_admin', params: {'name': profile.fullName})
-                  : l.t('admin_admin_removed', params: {'name': profile.fullName}),
+                  : l.t(
+                      'admin_admin_removed',
+                      params: {'name': profile.fullName},
+                    ),
             ),
           ),
         );
@@ -119,9 +126,21 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     }
   }
 
+  (IconData, Color) _roleIconStyle(UserProfile profile) {
+    switch (profile.adminRole) {
+      case AdminRole.none:
+        return (Icons.person, Colors.blue);
+      case AdminRole.admin:
+        return (Icons.admin_panel_settings, Colors.orange);
+      case AdminRole.superAdmin:
+        return (Icons.admin_panel_settings, Colors.deepPurple);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final canManageAccounts = widget.viewer.isSuperAdmin;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -177,6 +196,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
             separatorBuilder: (_, __) => const SizedBox(height: 8),
             itemBuilder: (context, index) {
               final profile = users[index];
+              final isSelf = profile.id == widget.viewer.id;
+              final (iconData, iconColor) = _roleIconStyle(profile);
               return Card(
                 child: ListTile(
                   leading: CircleAvatar(
@@ -195,31 +216,38 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                         '${l.t('admin_contact')}: ${profile.contactNo.isEmpty ? '-' : profile.contactNo}',
                       ),
                       Text(
-                        '${l.t('admin_admin')}: ${profile.isAdmin ? l.t('yes') : l.t('no')}',
+                        '${l.t('admin_role')}: ${l.t(profile.staffRoleL10nKey)}',
                       ),
                     ],
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          profile.isAdmin
-                              ? Icons.admin_panel_settings
-                              : Icons.person,
-                          color: profile.isAdmin ? Colors.orange : Colors.blue,
-                        ),
-                        onPressed: () => _toggleAdminStatus(context, profile),
-                        tooltip: profile.isAdmin
-                            ? l.t('admin_remove_admin_btn')
-                            : l.t('admin_make_admin_btn'),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _deleteUser(context, profile),
-                      ),
-                    ],
-                  ),
+                  trailing: canManageAccounts
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                iconData,
+                                color: iconColor,
+                              ),
+                              onPressed: () =>
+                                  _toggleAdminStatus(context, profile),
+                              tooltip: profile.hasStaffAccess
+                                  ? l.t('admin_remove_admin_btn')
+                                  : l.t('admin_make_admin_btn'),
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete,
+                                color: isSelf ? Colors.grey : Colors.red,
+                              ),
+                              onPressed: isSelf
+                                  ? null
+                                  : () => _deleteUser(context, profile),
+                              tooltip: isSelf ? null : l.t('admin_delete'),
+                            ),
+                          ],
+                        )
+                      : null,
                 ),
               );
             },

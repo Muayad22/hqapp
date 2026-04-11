@@ -35,7 +35,7 @@ class AdminAnalyticsChartsScreen extends StatelessWidget {
           }
 
           final allUsers = usersSnap.data ?? const <UserProfile>[];
-          final users = allUsers.where((u) => !u.isAdmin).toList();
+          final users = allUsers.where((u) => !u.hasStaffAccess).toList();
 
           if (users.isEmpty) {
             return _EmptyState(message: l.t('admin_analytics_empty_users'));

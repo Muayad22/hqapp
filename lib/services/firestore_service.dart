@@ -144,7 +144,7 @@ class FirestoreService {
         email: normalizedEmail,
         contactNo: contactNo,
         visitorType: visitorType,
-        isAdmin: isAdmin,
+        adminRole: isAdmin ? AdminRole.admin : AdminRole.none,
       );
 
       await newUserRef
@@ -770,9 +770,10 @@ class FirestoreService {
     }
   }
 
-  static Future<void> updateUserAdminStatus(String userId, bool isAdmin) async {
+  /// Sets normal admin (`Y`) or removes staff (`N`). Super admin (`S`) is only set in the database.
+  static Future<void> updateUserAdminStatus(String userId, bool grantAdmin) async {
     await _db.child(_usersPath).child(userId).update({
-      'admin': isAdmin ? 'Y' : 'N',
+      'admin': grantAdmin ? 'Y' : 'N',
     });
   }
 

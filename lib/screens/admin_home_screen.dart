@@ -250,7 +250,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     onTap: () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const ManageUsersScreen(),
+                        builder: (_) => ManageUsersScreen(viewer: widget.user),
                       ),
                     ),
                   ),
