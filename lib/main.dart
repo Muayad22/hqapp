@@ -14,9 +14,5 @@ void main() async{
       brightness: Brightness.light, // force light mode
     ),
     home: const LoginScreen(),
-
-    //this is a comment from Muayad
-    //testing the pull request
-    //test by loay
   ));
 }
