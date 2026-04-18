@@ -4,6 +4,7 @@ import 'package:hqapp/screens/admin_home_screen.dart';
 import 'package:hqapp/screens/forgot_password_screen.dart';
 import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/screens/register_screen.dart';
+import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
@@ -146,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _continueAsGuest() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => HomeScreen(user: UserProfile.guest())),
+      MaterialPageRoute(builder: (_) => Tutorialpage(user: UserProfile.guest())),
     );
   }
 
