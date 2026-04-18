@@ -23,26 +23,16 @@ class _TutorialpageState extends State<Tutorialpage> {
 
   List<String> images = [
     'lib/dependencies/tutorial_images/welcomePage.png',
-    'lib/dependencies/tutorial_images/homePage_intro.png',
-    'lib/dependencies/tutorial_images/homePage_stats.png',
-    'lib/dependencies/tutorial_images/homePage_quiz.png',
-    'lib/dependencies/tutorial_images/homePage_notification.png',
-    'lib/dependencies/tutorial_images/homePage_leaderboard.png',
-    'lib/dependencies/tutorial_images/homePage_achievements.png',
-    'lib/dependencies/tutorial_images/homePage_map.png',
+    'lib/dependencies/tutorial_images/homePage_1.png',
+    'lib/dependencies/tutorial_images/homePage_2.png',
     'lib/dependencies/tutorial_images/scanPage.png',
     'lib/dependencies/tutorial_images/profilePage.png',
   ];
 
   List<String> imagesAr = [
     'lib/dependencies/tutorial_images/welcomePageAr.png',
-    'lib/dependencies/tutorial_images/homePage_introAr.png',
-    'lib/dependencies/tutorial_images/homePage_statsAr.png',
-    'lib/dependencies/tutorial_images/homePage_quizAr.png',
-    'lib/dependencies/tutorial_images/homePage_notificationAr.png',
-    'lib/dependencies/tutorial_images/homePage_leaderboardAr.png',
-    'lib/dependencies/tutorial_images/homePage_achievementsAr.png',
-    'lib/dependencies/tutorial_images/homePage_mapAr.png',
+    'lib/dependencies/tutorial_images/homePage_1Ar.png',
+    'lib/dependencies/tutorial_images/homePage_2Ar.png',
     'lib/dependencies/tutorial_images/scanPageAr.png',
     'lib/dependencies/tutorial_images/profilePageAr.png',
   ];
@@ -150,7 +140,7 @@ class _TutorialpageState extends State<Tutorialpage> {
 
           SizedBox(height: 6,),
 
-          currentIndex == 9 ?
+          currentIndex == images.length - 1 ?
           ElevatedButton(
               style: ElevatedButton.styleFrom(
                backgroundColor: Color(0xFF82522a),
