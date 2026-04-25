@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
+import 'package:hqapp/screens/media_player_screen.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
 import 'package:hqapp/models/user_profile.dart';
@@ -1237,13 +1238,24 @@ class _HomeScreenState extends State<HomeScreen> {
     controller.scannedDataStream.listen((scanData) {
       setState(() {
         result = scanData;
+        bool? isMP3 = result?.code?.contains('.mp3');
         if (!screenOpen && result?.code != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => FoundCodeScreen(value: result),
-            ),
-          );
+          if (isMP3!= null && isMP3){
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AudioPlayerScreen(value: result,),
+              ),
+            );
+          }
+          else{
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VideoPlayerScreen(value: result,),
+              ),
+            );
+          }
           controller.pauseCamera();
           screenOpen = true;
         }

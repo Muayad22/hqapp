@@ -397,6 +397,8 @@ class AppLocalizations {
           'Password reset successfully! You can now login with your new password.',
       'forgot_password_failed_reset':
           'Failed to reset password. Please try again.',
+      'video_player':'Video Player',
+      'audio_player':'Audio Player',
     },
     'ar': {
       'app_title': 'Heritage Quest', //  title
@@ -735,6 +737,8 @@ class AppLocalizations {
           'تمت إعادة تعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
       'forgot_password_failed_reset':
           'فشل إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.',
+      'video_player':'مشغل الفيديو',
+      'audio_player':'مشغل الصوت',
     },
   };
 

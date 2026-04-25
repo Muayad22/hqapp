@@ -3,6 +3,7 @@ import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/admin_home_screen.dart';
 import 'package:hqapp/screens/forgot_password_screen.dart';
 import 'package:hqapp/screens/home_screen.dart';
+import 'package:hqapp/screens/media_player_screen.dart';
 import 'package:hqapp/screens/register_screen.dart';
 import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
@@ -143,7 +144,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
-
   void _continueAsGuest() {
     Navigator.pushReplacement(
       context,
