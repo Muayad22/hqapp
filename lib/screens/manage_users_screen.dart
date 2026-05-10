@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/localization/app_localizations.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   final UserProfile viewer;
@@ -13,17 +13,28 @@ class ManageUsersScreen extends StatefulWidget {
 }
 
 class _ManageUsersScreenState extends State<ManageUsersScreen> {
-  Future<void> _deleteUser(BuildContext context, UserProfile profile) async {
+  Future<void> _setAccountDisabled(
+    BuildContext context,
+    UserProfile profile, {
+    required bool disable,
+  }) async {
     final l = AppLocalizations.of(context);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(l.t('admin_delete_user_q')),
+        title: Text(
+          disable ? l.t('admin_disable_user_q') : l.t('admin_enable_user_q'),
+        ),
         content: Text(
-          l.t(
-            'admin_delete_user_msg',
-            params: {'name': profile.fullName},
-          ),
+          disable
+              ? l.t(
+                  'admin_disable_user_msg',
+                  params: {'name': profile.fullName},
+                )
+              : l.t(
+                  'admin_enable_user_msg',
+                  params: {'name': profile.fullName},
+                ),
         ),
         actions: [
           TextButton(
@@ -33,27 +44,42 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: disable ? Colors.orange.shade800 : Colors.green,
               foregroundColor: Colors.white,
             ),
-            child: Text(l.t('admin_delete')),
+            child: Text(disable ? l.t('admin_disable') : l.t('admin_enable')),
           ),
         ],
       ),
     );
 
     if (confirm != true) return;
-    await FirestoreService.deleteUser(profile.id);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(
-      SnackBar(
-        content: Text(
-          l.t('admin_user_removed', params: {'name': profile.fullName}),
+    try {
+      await FirestoreService.setAccountDisabled(
+        userId: profile.id,
+        disabled: disable,
+      );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            disable
+                ? l.t('admin_user_disabled', params: {'name': profile.fullName})
+                : l.t('admin_user_enabled', params: {'name': profile.fullName}),
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l.t('admin_update_user_error', params: {'error': e.toString()}),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _toggleAdminStatus(
@@ -70,10 +96,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
         ),
         content: Text(
           grantStaff
-              ? l.t(
-                  'admin_make_admin_msg',
-                  params: {'name': profile.fullName},
-                )
+              ? l.t('admin_make_admin_msg', params: {'name': profile.fullName})
               : l.t(
                   'admin_remove_admin_msg',
                   params: {'name': profile.fullName},
@@ -218,6 +241,17 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       Text(
                         '${l.t('admin_role')}: ${l.t(profile.staffRoleL10nKey)}',
                       ),
+                      if (profile.accountDisabled)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            l.t('admin_status_disabled'),
+                            style: TextStyle(
+                              color: Colors.red.shade800,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                   trailing: canManageAccounts
@@ -225,10 +259,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(
-                                iconData,
-                                color: iconColor,
-                              ),
+                              icon: Icon(iconData, color: iconColor),
                               onPressed: () =>
                                   _toggleAdminStatus(context, profile),
                               tooltip: profile.hasStaffAccess
@@ -237,13 +268,27 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                             ),
                             IconButton(
                               icon: Icon(
-                                Icons.delete,
-                                color: isSelf ? Colors.grey : Colors.red,
+                                profile.accountDisabled
+                                    ? Icons.person_outline
+                                    : Icons.no_accounts_outlined,
+                                color: isSelf
+                                    ? Colors.grey
+                                    : (profile.accountDisabled
+                                          ? Colors.green
+                                          : Colors.orange.shade800),
                               ),
                               onPressed: isSelf
                                   ? null
-                                  : () => _deleteUser(context, profile),
-                              tooltip: isSelf ? null : l.t('admin_delete'),
+                                  : () => _setAccountDisabled(
+                                      context,
+                                      profile,
+                                      disable: !profile.accountDisabled,
+                                    ),
+                              tooltip: isSelf
+                                  ? null
+                                  : (profile.accountDisabled
+                                        ? l.t('admin_enable')
+                                        : l.t('admin_disable')),
                             ),
                           ],
                         )

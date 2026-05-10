@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/services/session_service.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -45,10 +46,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
         visitorType: _visitorType,
       );
       if (!mounted) return;
+      await SessionService.saveSession(user.id);
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => Tutorialpage(user: user)),
-            (route) => false,
+        (route) => false,
       );
     } on AuthException catch (error) {
       _showMessage(AppLocalizations.localizeError(context, error.message));
@@ -56,9 +59,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final errorMessage = e.toString().replaceFirst('Exception: ', '');
       final l = AppLocalizations.of(context);
       _showMessage(
-        errorMessage.isEmpty
-            ? l.t('register_generic_error')
-            : errorMessage,
+        errorMessage.isEmpty ? l.t('register_generic_error') : errorMessage,
       );
     } finally {
       if (mounted) setState(() => _submitting = false);

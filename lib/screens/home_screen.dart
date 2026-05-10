@@ -14,6 +14,7 @@ import 'package:hqapp/screens/quiz_screen.dart';
 import 'package:hqapp/screens/map_tracking_screen.dart';
 import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/services/session_service.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -61,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() => _selectedIndex = index);
   }
 
-  void _logout() {
+  Future<void> _logout() async {
+    await SessionService.clearSession();
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -1240,19 +1243,28 @@ class _HomeScreenState extends State<HomeScreen> {
         result = scanData;
         bool? isMP3 = result?.code?.contains('.mp3');
         if (!screenOpen && result?.code != null) {
-          if (isMP3!= null && isMP3){
+          final code = result?.code ?? '';
+          final bool isMP4 = code.contains('.mp4');
+          if (isMP3 != null && isMP3) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AudioPlayerScreen(value: result,),
+                builder: (context) => AudioPlayerScreen(value: result),
               ),
             );
-          }
-          else{
+          } else if (isMP4) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VideoPlayerScreen(value: result,),
+                builder: (context) => VideoPlayerScreen(value: result),
+              ),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    FoundCodeScreen(value: result, scanningUser: _user),
               ),
             );
           }

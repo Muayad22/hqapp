@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
+import 'package:hqapp/screens/admin_user_support_screen.dart';
 import 'package:hqapp/screens/admin_feedback_screen.dart';
 import 'package:hqapp/screens/admin_analytics_charts_screen.dart';
 import 'package:hqapp/screens/leaderboard_screen.dart';
 import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/screens/manage_users_screen.dart';
 import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/services/session_service.dart';
 
 class AdminHomeScreen extends StatefulWidget {
   final UserProfile user;
@@ -17,7 +19,9 @@ class AdminHomeScreen extends StatefulWidget {
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  void _logout(BuildContext context) {
+  Future<void> _logout(BuildContext context) async {
+    await SessionService.clearSession();
+    if (!context.mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const LoginScreen()),
@@ -252,6 +256,19 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       context,
                       MaterialPageRoute(
                         builder: (_) => ManageUsersScreen(viewer: widget.user),
+                      ),
+                    ),
+                  ),
+                  _AdminCard(
+                    icon: Icons.support_agent,
+                    title: l.t('admin_user_support_card_title'),
+                    subtitle: l.t('admin_user_support_card_subtitle'),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => AdminUserSupportScreen(
+                          viewer: widget.user,
+                        ),
                       ),
                     ),
                   ),

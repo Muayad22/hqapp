@@ -1,7 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/models/user_profile.dart';
+import 'package:hqapp/services/achievement_helpers.dart';
+import 'package:hqapp/services/firestore_service.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   const MapTrackingScreen({super.key});
@@ -54,9 +58,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       'lib/dependencies/images/fullMap.png',
                       filterQuality: FilterQuality.high,
                       errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Text(l.t('map_image_not_found')),
-                        );
+                        return Center(child: Text(l.t('map_image_not_found')));
                       },
                     ),
                   ),
@@ -253,13 +255,76 @@ class _QrCodeState extends State<QrCode> {
 class FoundCodeScreen extends StatefulWidget {
   final Barcode? value;
 
-  const FoundCodeScreen({super.key, required this.value});
+  /// When set (e.g. from home tab scan), successful opens count toward scan achievements.
+  final UserProfile? scanningUser;
+
+  const FoundCodeScreen({super.key, required this.value, this.scanningUser});
 
   @override
   State<FoundCodeScreen> createState() => _FoundCodeScreenState();
 }
 
 class _FoundCodeScreenState extends State<FoundCodeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _recordScanIfEligible(),
+    );
+  }
+
+  Future<void> _recordScanIfEligible() async {
+    final user = widget.scanningUser;
+    final code = widget.value?.code;
+    if (user == null || user.id == 'guest') return;
+    if (code == null || code.isEmpty) return;
+
+    try {
+      final newCount = await FirestoreService.incrementUserScanCount(user.id);
+      await FirestoreService.updateUserAchievementsAndLeaderboard(
+        userId: user.id,
+        userName: user.fullName,
+      );
+      if (!mounted) return;
+      final l = AppLocalizations.of(context);
+      if (newCount == 1) {
+        await FirestoreService.createNotification(
+          userId: user.id,
+          title: l.t('achievement_unlocked_first_scan_title'),
+          message: l.t('achievement_unlocked_first_scan_message'),
+          type: 'achievement',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l.t('achievement_unlocked_first_scan_title')),
+              duration: const Duration(seconds: 3),
+              backgroundColor: const Color(0xFF2E7D32),
+            ),
+          );
+        }
+      } else if (newCount == AchievementThresholds.keenScanner) {
+        await FirestoreService.createNotification(
+          userId: user.id,
+          title: l.t('achievement_unlocked_keen_scanner_title'),
+          message: l.t('achievement_unlocked_keen_scanner_message'),
+          type: 'achievement',
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l.t('achievement_unlocked_keen_scanner_title')),
+              duration: const Duration(seconds: 3),
+              backgroundColor: const Color(0xFF6B4423),
+            ),
+          );
+        }
+      }
+    } catch (_) {
+      // Non-blocking: scan UI still works if sync fails
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -304,57 +369,15 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                             filterQuality: FilterQuality.high,
                             errorBuilder: (context, error, stackTrace) {
                               return Center(
-                                child: Text(
-                                  l.t('qr_location_image_not_found'),
-                                ),
+                                child: Text(l.t('qr_location_image_not_found')),
                               );
                             },
                           )
-                        : Center(
-                            child: Text(l.t('qr_no_location_image')),
-                          ),
+                        : Center(child: Text(l.t('qr_no_location_image'))),
                   ),
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildGradientButton({required String text, VoidCallback? onPressed}) {
-    return Container(
-      height: 56,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF6B4423), const Color(0xFF8B4513)],
-        ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6B4423).withOpacity(0.3),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
           ),
         ),
       ),

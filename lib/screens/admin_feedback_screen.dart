@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/widgets/feedback_star_rating.dart';
 
 class AdminFeedbackScreen extends StatefulWidget {
   const AdminFeedbackScreen({super.key});
@@ -115,14 +116,45 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  feedback.userName.isNotEmpty
-                                      ? feedback.userName
-                                      : l.t('admin_feedback_anonymous'),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                Row(
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        feedback.userName.isNotEmpty
+                                            ? feedback.userName
+                                            : l.t('admin_feedback_anonymous'),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (feedback.isGuest) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.blueGrey.shade100,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          l.t('admin_feedback_guest_badge'),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.blueGrey.shade800,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -132,6 +164,22 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                                     fontSize: 12,
                                   ),
                                 ),
+                                if (feedback.rating != null) ...[
+                                  const SizedBox(height: 6),
+                                  FeedbackStarRatingDisplay(
+                                    rating: feedback.rating!,
+                                  ),
+                                ] else
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 6),
+                                    child: Text(
+                                      l.t('admin_feedback_no_rating'),
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             ),
                           ),

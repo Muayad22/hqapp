@@ -7,7 +7,9 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
+import 'package:hqapp/models/disabled_account_appeal.dart';
 import 'package:hqapp/models/feedback_entry.dart';
+import 'package:hqapp/services/achievement_helpers.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/models/notification_entry.dart';
 import 'package:hqapp/models/quiz_result.dart';
@@ -87,6 +89,12 @@ class FirestoreService {
   static const _pointsLeaderboardPath = 'leaderboard';
   static const _notificationsPath = 'notifications';
   static const _otpPath = 'passwordResetOTPs';
+  /// Verified disabled-user messages for admins (push from login only after password check).
+  ///
+  /// Rules: allow `.write` for `push`/`set` under this path from the client if your
+  /// security model permits (the app re-checks password before writing). Staff need
+  /// `.read` to list appeals in the admin app.
+  static const _disabledAccountAppealsPath = 'disabledAccountAppeals';
 
   static String _hashPassword(String value) {
     final bytes = utf8.encode(value);
@@ -219,59 +227,78 @@ class FirestoreService {
     }
   }
 
+  /// Email/password match against [users]. Does not check [UserProfile.accountDisabled].
+  static Future<UserProfile> _profileAfterPasswordCheck({
+    required String email,
+    required String password,
+  }) async {
+    final normalizedEmail = email.toLowerCase().trim();
+
+    final usersSnapshot = await _db
+        .child(_usersPath)
+        .get()
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception(
+              'Connection timeout. Please check your internet connection and try again.',
+            );
+          },
+        );
+
+    if (!usersSnapshot.exists) {
+      throw const AuthException('The email is not registered.  ');
+    }
+
+    final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
+    if (usersData == null || usersData.isEmpty) {
+      throw const AuthException('The email is not registered.  ');
+    }
+
+    String? userId;
+    Map<dynamic, dynamic>? userData;
+
+    for (var entry in usersData.entries) {
+      final data = entry.value as Map<dynamic, dynamic>;
+      final existingEmail = (data['email'] as String? ?? '').toLowerCase();
+      if (existingEmail == normalizedEmail) {
+        userId = entry.key as String;
+        userData = data;
+        break;
+      }
+    }
+
+    if (userId == null || userData == null) {
+      throw const AuthException('The email is not registered.  ');
+    }
+
+    final storedHash = userData['passwordHash'] as String? ?? '';
+    if (storedHash != _hashPassword(password)) {
+      throw const AuthException('Invalid email or password.');
+    }
+
+    return UserProfile.fromMap(
+      userId,
+      Map<String, dynamic>.from(userData),
+    );
+  }
+
   static Future<UserProfile> login({
     required String email,
     required String password,
   }) async {
     try {
-      // Convert email to lowercase
-      final normalizedEmail = email.toLowerCase().trim();
-
-      final usersSnapshot = await _db
-          .child(_usersPath)
-          .get()
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: () {
-              throw Exception(
-                'Connection timeout. Please check your internet connection and try again.',
-              );
-            },
-          );
-
-      if (!usersSnapshot.exists) {
-        throw const AuthException('The email is not registered.  ');
+      final profile = await _profileAfterPasswordCheck(
+        email: email,
+        password: password,
+      );
+      if (profile.accountDisabled) {
+        throw const AuthException(
+          'This account has been disabled. Please contact support.',
+        );
       }
 
-      final usersData = usersSnapshot.value as Map<dynamic, dynamic>?;
-      if (usersData == null || usersData.isEmpty) {
-        throw const AuthException('The email is not registered.  ');
-      }
-
-      // Find user by email
-      String? userId;
-      Map<dynamic, dynamic>? userData;
-
-      for (var entry in usersData.entries) {
-        final data = entry.value as Map<dynamic, dynamic>;
-        final existingEmail = (data['email'] as String? ?? '').toLowerCase();
-        if (existingEmail == normalizedEmail) {
-          userId = entry.key as String;
-          userData = data;
-          break;
-        }
-      }
-
-      if (userId == null || userData == null) {
-        throw const AuthException('The email is not registered.  ');
-      }
-
-      final storedHash = userData['passwordHash'] as String? ?? '';
-      if (storedHash != _hashPassword(password)) {
-        throw const AuthException('Invalid email or password.');
-      }
-
-      return UserProfile.fromMap(userId, Map<String, dynamic>.from(userData));
+      return profile;
     } catch (e) {
       if (e is AuthException) {
         rethrow;
@@ -327,6 +354,43 @@ class FirestoreService {
     }
   }
 
+  /// Loads a single user row for session restore. Returns null if missing,
+  /// guest id, or account is disabled.
+  static Future<UserProfile?> getUserProfileById(String userId) async {
+    if (userId.isEmpty || userId == 'guest') return null;
+    try {
+      final snapshot = await _db
+          .child(_usersPath)
+          .child(userId)
+          .get()
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: () {
+              throw Exception(
+                'Connection timeout. Please check your internet connection and try again.',
+              );
+            },
+          );
+
+      if (!snapshot.exists) return null;
+
+      final userData = snapshot.value as Map<dynamic, dynamic>?;
+      if (userData == null) return null;
+
+      final user = UserProfile.fromMap(
+        userId,
+        Map<String, dynamic>.from(userData),
+      );
+      if (user.accountDisabled) return null;
+      return user;
+    } catch (e) {
+      if (kDebugMode) {
+        print('getUserProfileById error: $e');
+      }
+      return null;
+    }
+  }
+
   static Stream<List<UserProfile>> usersStream() {
     return _db
         .child(_usersPath)
@@ -355,8 +419,108 @@ class FirestoreService {
         });
   }
 
-  static Future<void> deleteUser(String userId) {
-    return _db.child(_usersPath).child(userId).remove();
+  /// Super admin: soft-disable (user row stays; sign-in blocked).
+  static Future<void> setAccountDisabled({
+    required String userId,
+    required bool disabled,
+  }) {
+    return _db.child(_usersPath).child(userId).update({
+      'accountDisabled': disabled,
+    });
+  }
+
+  /// Submits a message for admins. Re-verifies email/password and that the account is disabled.
+  static Future<void> submitDisabledAccountAppeal({
+    required String email,
+    required String password,
+    required String message,
+  }) async {
+    try {
+      final profile = await _profileAfterPasswordCheck(
+        email: email,
+        password: password,
+      );
+      if (!profile.accountDisabled) {
+        throw const AuthException(
+          'This account is not disabled. Sign in with your email and password.',
+        );
+      }
+      final trimmed = message.trim();
+      if (trimmed.isEmpty) {
+        throw const AuthException(
+          'Please enter a message for the administrator.',
+        );
+      }
+      if (trimmed.length > 2000) {
+        throw const AuthException(
+          'Message is too long. Use at most 2000 characters.',
+        );
+      }
+      await _db.child(_disabledAccountAppealsPath).push().set({
+        'userId': profile.id,
+        'email': profile.email,
+        'fullName': profile.fullName,
+        'message': trimmed,
+        'createdAt': ServerValue.timestamp,
+        'resolved': false,
+      });
+    } catch (e) {
+      if (e is AuthException) {
+        rethrow;
+      }
+      if (e is FirebaseException) {
+        switch (e.code) {
+          case 'permission-denied':
+            throw Exception(
+              'Database permission error. Please contact support or check Firebase rules.',
+            );
+          default:
+            throw Exception(
+              'Could not send message: ${e.message ?? e.code}. Please try again.',
+            );
+        }
+      }
+      rethrow;
+    }
+  }
+
+  static Stream<List<DisabledAccountAppeal>> disabledAccountAppealsStream() {
+    return _db.child(_disabledAccountAppealsPath).onValue.map((event) {
+      if (!event.snapshot.exists) {
+        return <DisabledAccountAppeal>[];
+      }
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) {
+        return <DisabledAccountAppeal>[];
+      }
+      final list = <DisabledAccountAppeal>[];
+      for (final entry in data.entries) {
+        final id = entry.key.toString();
+        final raw = entry.value;
+        if (raw is! Map) continue;
+        final m = Map<String, dynamic>.from(
+          raw.map((k, v) => MapEntry(k.toString(), v)),
+        );
+        list.add(DisabledAccountAppeal.fromEntry(id, m));
+      }
+      list.sort((a, b) {
+        final ta = a.createdAt ?? 0;
+        final tb = b.createdAt ?? 0;
+        return tb.compareTo(ta);
+      });
+      return list;
+    });
+  }
+
+  static Future<void> resolveAppealAndEnableAccount({
+    required String appealId,
+    required String userId,
+  }) async {
+    await setAccountDisabled(userId: userId, disabled: false);
+    await _db
+        .child(_disabledAccountAppealsPath)
+        .child(appealId)
+        .update({'resolved': true});
   }
 
   static Future<void> updateUser(UserProfile profile) {
@@ -604,12 +768,15 @@ class FirestoreService {
   static Future<void> submitFeedback({
     required UserProfile user,
     required String message,
+    required int rating,
   }) {
+    final clamped = rating.clamp(1, 5);
     final feedbackRef = _db.child(_feedbackPath).push();
     return feedbackRef.set({
       'userId': user.id,
       'userName': user.fullName,
       'message': message,
+      'rating': clamped,
       'createdAt': DateTime.now().toIso8601String(),
     });
   }
@@ -771,7 +938,10 @@ class FirestoreService {
   }
 
   /// Sets normal admin (`Y`) or removes staff (`N`). Super admin (`S`) is only set in the database.
-  static Future<void> updateUserAdminStatus(String userId, bool grantAdmin) async {
+  static Future<void> updateUserAdminStatus(
+    String userId,
+    bool grantAdmin,
+  ) async {
     await _db.child(_usersPath).child(userId).update({
       'admin': grantAdmin ? 'Y' : 'N',
     });
@@ -848,6 +1018,32 @@ class FirestoreService {
     }
   }
 
+  static Future<int> getUserScanCount(String userId) async {
+    if (userId == 'guest') return 0;
+    try {
+      final snap = await _db
+          .child(_usersPath)
+          .child(userId)
+          .child('scanCount')
+          .get()
+          .timeout(const Duration(seconds: 10));
+      return (snap.value as num?)?.toInt() ?? 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Counts a successful heritage QR scan (location image opened). Returns new total.
+  static Future<int> incrementUserScanCount(String userId) async {
+    if (userId == 'guest') return 0;
+    final ref = _db.child(_usersPath).child(userId).child('scanCount');
+    final snap = await ref.get().timeout(const Duration(seconds: 10));
+    final n = (snap.value as num?)?.toInt() ?? 0;
+    final next = n + 1;
+    await ref.set(next).timeout(const Duration(seconds: 10));
+    return next;
+  }
+
   /// Calculate achievements and update leaderboard points for a user
   static Future<void> updateUserAchievementsAndLeaderboard({
     required String userId,
@@ -855,42 +1051,14 @@ class FirestoreService {
   }) async {
     try {
       final quizResults = await getUserQuizResults(userId);
+      final scanCount = await getUserScanCount(userId);
       final quizCount = quizResults.length;
-      final hasFullMark = quizResults.any((r) => r.score == r.totalQuestions);
-      final hasPerfectScore = quizResults.any(
-        (r) => r.score == r.totalQuestions && r.totalQuestions >= 5,
-      );
 
-      // Calculate achievement points
-      int totalPoints = 0;
-
-      // First Quiz - 50 points
-      if (quizCount >= 1) totalPoints += 50;
-
-      // Perfect Score - 100 points
-      if (hasFullMark) totalPoints += 100;
-
-      // Quiz Master (5 quizzes) - 150 points
-      if (quizCount >= 5) totalPoints += 150;
-
-      // History Expert (10 quizzes) - 250 points
-      if (quizCount >= 10) totalPoints += 250;
-
-      // Flawless Victory (perfect 5-question quiz) - 200 points
-      if (hasPerfectScore) totalPoints += 200;
-
-      // Dedicated Learner (20 quizzes) - 300 points
-      if (quizCount >= 20) totalPoints += 300;
-
-      // Heritage Scholar (30 quizzes) - 400 points
-      if (quizCount >= 30) totalPoints += 400;
-
-      // Master Explorer (50 quizzes) - 500 points
-      if (quizCount >= 50) totalPoints += 500;
+      final totalPoints = achievementLeaderboardPoints(quizResults, scanCount);
 
       if (kDebugMode) {
         print(
-          'Calculated total points: $totalPoints for user $userId (quizCount: $quizCount)',
+          'Calculated total points: $totalPoints for user $userId (quizCount: $quizCount, scans: $scanCount)',
         );
       }
 
