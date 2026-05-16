@@ -6,7 +6,7 @@ Future<String> getOpenRouterResponse(String userInput) async{
   const endpoint =  'https://openrouter.ai/api/v1/chat/completions';
 
   final headers = {
-    'Authorization': 'Bearer ',
+    'Authorization': 'Bearer',
     'Content-Type': 'application/json',
   };
 
