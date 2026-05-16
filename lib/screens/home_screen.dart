@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
+import 'package:hqapp/screens/ai_chatbot_screen.dart';
 import 'package:hqapp/screens/media_player_screen.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
@@ -969,18 +970,37 @@ class _HomeScreenState extends State<HomeScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      ElevatedButton(
+                      Expanded(
+                        child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => Tutorialpage(user: _user),
+                                ),
+                                    (route) => false,
+                              );
+                            },
+                            child: Text(l.t('tutorial')),
+                          ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                              fixedSize: const Size(200, 50)
+                          ),
                           onPressed: () {
-                            Navigator.pushAndRemoveUntil(
+                            Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => Tutorialpage(user: _user),
+                                builder: (_) => AiChatbot(),
                               ),
-                                  (route) => false,
                             );
                           },
-                          child: Text(l.t('tutorial')),
+                          child: Text(l.t('ai_chatbot'),),
                         ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 12),

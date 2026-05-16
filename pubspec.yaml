@@ -80,6 +80,10 @@ dependencies:
   just_audio: ^0.10.5
   audio_video_progress_bar: ^2.0.3
 
+  # AI Chatbot
+  grouped_list: ^4.2.0
+  intl: ^0.17.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

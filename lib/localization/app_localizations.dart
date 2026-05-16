@@ -473,8 +473,11 @@ class AppLocalizations {
           'Password reset successfully! You can now login with your new password.',
       'forgot_password_failed_reset':
           'Failed to reset password. Please try again.',
+      //Media player
       'video_player':'Video Player',
       'audio_player':'Audio Player',
+      //AI Chatbot
+      'ai_chatbot':'AI Chatbot',
 
     },
     'ar': {
@@ -733,7 +736,7 @@ class AppLocalizations {
       'map_title': 'الخريطة',
       'map_find_location_button': 'اعثر على موقعك الحالي',
       'map_image_not_found': 'لم يتم العثور على الصورة: fullMap.png',
-      'qr_title': 'قارئ QR',
+      'qr_title': 'QR قارئ',
       'qr_scan_again': 'امسح مرة أخرى',
       'qr_location_title': 'موقعك',
       'default':'طبيعي',
@@ -877,8 +880,12 @@ class AppLocalizations {
           'تمت إعادة تعيين كلمة المرور بنجاح! يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.',
       'forgot_password_failed_reset':
           'فشل إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.',
+      //meida player
       'video_player':'مشغل الفيديو',
       'audio_player':'مشغل الصوت',
+      //AI chatbot
+      'ai_chatbot':' مساعد الذكاء الاصطناعي',
+
     },
   };
 
