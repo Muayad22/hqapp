@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/models/quiz_result.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/login_screen.dart';
+import 'package:hqapp/services/achievement_helpers.dart';
 import 'package:hqapp/services/firestore_service.dart';
-import 'package:hqapp/localization/app_localizations.dart';
 
 class AchievementsScreen extends StatefulWidget {
   final UserProfile user;
@@ -35,7 +37,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _loadAchievements() async {
     if (widget.user.id == 'guest') {
       setState(() {
-        _achievements = _getDefaultAchievements(false, 0, false, false);
+        _achievements = _buildAchievementRows(
+          quizResults: const [],
+          scanCount: 0,
+          previewLocked: true,
+        );
         _isLoading = false;
       });
       return;
@@ -44,126 +50,65 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final quizResults = await FirestoreService.getUserQuizResults(
       widget.user.id,
     );
-    final quizCount = quizResults.length;
-    final hasFullMark = quizResults.any((r) => r.score == r.totalQuestions);
-    final hasFirstQuiz = quizCount > 0;
-    final hasPerfectScore = quizResults.any(
-      (r) => r.score == r.totalQuestions && r.totalQuestions >= 5,
-    );
+    final scanCount = await FirestoreService.getUserScanCount(widget.user.id);
 
-    final achievements = _getDefaultAchievements(
-      hasFirstQuiz,
-      quizCount,
-      hasFullMark,
-      hasPerfectScore,
-    );
-
-    // Update achievements and leaderboard
     await FirestoreService.updateUserAchievementsAndLeaderboard(
       userId: widget.user.id,
       userName: widget.user.fullName,
     );
 
     setState(() {
-      _achievements = achievements;
+      _achievements = _buildAchievementRows(
+        quizResults: quizResults,
+        scanCount: scanCount,
+        previewLocked: false,
+      );
       _isLoading = false;
     });
   }
 
-  List<Map<String, dynamic>> _getDefaultAchievements(
-    bool hasFirstQuiz,
-    int quizCount,
-    bool hasFullMark,
-    bool hasPerfectScore,
-  ) {
-    final consecutivePerfect = 0; // Would need to track this
-
-    return [
-      {
-        'id': 1,
-        ..._achievementText(1),
-        'icon': '🎯',
-        'unlocked': hasFirstQuiz,
-        'points': 50,
-      },
-      {
-        'id': 2,
-        ..._achievementText(2),
-        'icon': '🏆',
-        'unlocked': hasFullMark,
-        'points': 100,
-      },
-      {
-        'id': 3,
-        ..._achievementText(3),
-        'icon': '📚',
-        'unlocked': quizCount >= 5,
-        'points': 150,
-      },
-      {
-        'id': 4,
-        ..._achievementText(4),
-        'icon': '🎓',
-        'unlocked': quizCount >= 10,
-        'points': 250,
-      },
-      {
-        'id': 5,
-        ..._achievementText(5),
-        'icon': '⭐',
-        'unlocked': hasPerfectScore,
-        'points': 200,
-      },
-      {
-        'id': 6,
-        ..._achievementText(6),
-        'icon': '🌟',
-        'unlocked': quizCount >= 20,
-        'points': 300,
-      },
-      {
-        'id': 7,
-        ..._achievementText(7),
-        'icon': '⚡',
-        'unlocked': false, // Would need to track daily quiz count
-        'points': 175,
-      },
-      {
-        'id': 8,
-        ..._achievementText(8),
-        'icon': '🎖️',
-        'unlocked': quizCount >= 30,
-        'points': 400,
-      },
-      {
-        'id': 9,
-        ..._achievementText(9),
-        'icon': '🔥',
-        'unlocked': consecutivePerfect >= 3,
-        'points': 350,
-      },
-      {
-        'id': 10,
-        ..._achievementText(10),
-        'icon': '👑',
-        'unlocked': quizCount >= 50,
-        'points': 500,
-      },
-      {
-        'id': 11,
-        ..._achievementText(11),
-        'icon': '⏱️',
-        'unlocked': false, // Would need to track quiz time
-        'points': 125,
-      },
-      {
-        'id': 12,
-        ..._achievementText(12),
-        'icon': '📅',
-        'unlocked': false, // Would need to track weekly quiz count
-        'points': 275,
-      },
+  static String _achievementIcon(int id) {
+    const icons = [
+      '🎯',
+      '🏆',
+      '📚',
+      '🎓',
+      '⭐',
+      '🌟',
+      '⚡',
+      '🎖️',
+      '🔥',
+      '👑',
+      '⏱️',
+      '📅',
+      '📷',
+      '🧭',
     ];
+    return icons[id - 1];
+  }
+
+  List<Map<String, dynamic>> _buildAchievementRows({
+    required List<QuizResult> quizResults,
+    required int scanCount,
+    required bool previewLocked,
+  }) {
+    return List.generate(14, (index) {
+      final id = index + 1;
+      final unlocked = previewLocked
+          ? false
+          : achievementUnlocked(
+              id: id,
+              quizResults: quizResults,
+              scanCount: scanCount,
+            );
+      return {
+        'id': id,
+        ..._achievementText(id),
+        'icon': _achievementIcon(id),
+        'unlocked': unlocked,
+        'points': achievementPointsForId(id),
+      };
+    });
   }
 
   @override

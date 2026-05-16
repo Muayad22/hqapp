@@ -7,6 +7,7 @@ import 'package:hqapp/screens/media_player_screen.dart';
 import 'package:hqapp/screens/register_screen.dart';
 import 'package:hqapp/screens/tutorial_screen.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/services/session_service.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -24,11 +25,15 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _emailError;
   String? _passwordError;
+  bool _showDisabledAccountSupport = false;
+  final _appealMessageController = TextEditingController();
+  bool _appealSubmitting = false;
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _appealMessageController.dispose();
     super.dispose();
   }
 
@@ -38,6 +43,8 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       _emailError = null;
       _passwordError = null;
+      _showDisabledAccountSupport = false;
+      _appealMessageController.clear();
     });
 
     // Validate form - this will trigger validators and show errors
@@ -94,6 +101,8 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
       if (!mounted) return;
+      await SessionService.saveSession(user.id);
+      if (!mounted) return;
       if (user.hasStaffAccess) {
         Navigator.pushReplacement(
           context,
@@ -109,7 +118,19 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       // Set error on both fields for authentication errors
       final errorMessage = error.message.toLowerCase();
-      if (errorMessage.contains('email') ||
+      // Before broad `account` check: disabled message also contains "account".
+      if (errorMessage.contains('disabled')) {
+        setState(() {
+          final localized = AppLocalizations.localizeError(
+            context,
+            error.message,
+          );
+          _emailError = localized;
+          _passwordError = localized;
+          _showDisabledAccountSupport = true;
+        });
+        _formKey.currentState!.validate();
+      } else if (errorMessage.contains('email') ||
           errorMessage.contains('password') ||
           errorMessage.contains('invalid') ||
           errorMessage.contains('account') ||
@@ -124,7 +145,10 @@ class _LoginScreenState extends State<LoginScreen> {
       } else {
         // General error - show on both fields
         setState(() {
-          final localized = AppLocalizations.localizeError(context, error.message);
+          final localized = AppLocalizations.localizeError(
+            context,
+            error.message,
+          );
           _emailError = localized;
           _passwordError = localized;
         });
@@ -144,10 +168,51 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) setState(() => _isLoading = false);
     }
   }
+
+  Future<void> _submitDisabledAppeal() async {
+    final l = AppLocalizations.of(context);
+    if (_appealMessageController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.t('login_disabled_appeal_empty'))),
+      );
+      return;
+    }
+    setState(() => _appealSubmitting = true);
+    try {
+      await FirestoreService.submitDisabledAccountAppeal(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        message: _appealMessageController.text,
+      );
+      if (!mounted) return;
+      _appealMessageController.clear();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.t('login_disabled_appeal_sent'))),
+      );
+    } on AuthException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.localizeError(context, e.message)),
+          backgroundColor: Colors.red.shade800,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _appealSubmitting = false);
+    }
+  }
+
   void _continueAsGuest() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => Tutorialpage(user: UserProfile.guest())),
+      MaterialPageRoute(
+        builder: (_) => Tutorialpage(user: UserProfile.guest()),
+      ),
     );
   }
 
@@ -376,6 +441,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: _isLoading ? l.t('signing_in') : l.t('login_button'),
                     onPressed: _isLoading ? null : _login,
                   ),
+                  if (_showDisabledAccountSupport) ...[
+                    const SizedBox(height: 20),
+                    _buildDisabledAccountHelpCard(l),
+                  ],
                   const SizedBox(height: 30),
                   Row(
                     children: [
@@ -428,6 +497,95 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDisabledAccountHelpCard(AppLocalizations l) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF6B4423).withOpacity(0.35),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.support_agent, color: Color(0xFF6B4423)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  l.t('login_disabled_support_title'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Color(0xFF6B4423),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l.t('login_disabled_appeal_section_title'),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[800],
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: _appealMessageController,
+            minLines: 3,
+            maxLines: 6,
+            maxLength: 2000,
+            decoration: InputDecoration(
+              hintText: l.t('login_disabled_appeal_field_hint'),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.all(12),
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: _appealSubmitting ? null : _submitDisabledAppeal,
+            icon: _appealSubmitting
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.send_outlined, size: 20),
+            label: Text(
+              _appealSubmitting
+                  ? l.t('login_disabled_appeal_submitting')
+                  : l.t('login_disabled_appeal_submit'),
+            ),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF6B4423),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+          ),
+        ],
       ),
     );
   }

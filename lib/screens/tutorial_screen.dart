@@ -1,8 +1,9 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
-import 'package:hqapp/screens/home_screen.dart';
 import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/screens/home_screen.dart';
+import 'package:hqapp/services/session_service.dart';
 
 class Tutorialpage extends StatefulWidget {
   const Tutorialpage({super.key, required this.user});
@@ -44,150 +45,175 @@ class _TutorialpageState extends State<Tutorialpage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    return Scaffold(appBar: AppBar(
-      title: Text(
-        l.t('tutorial'),
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          l.t('tutorial'),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+        ),
+        backgroundColor: const Color(0xFF6B4423),
+        foregroundColor: Colors.white,
+        elevation: 2,
+        centerTitle: true,
       ),
-      backgroundColor: const Color(0xFF6B4423),
-      foregroundColor: Colors.white,
-      elevation: 2,
-      centerTitle: true,
-    ),
       body: Column(
         children: [
-
-          SizedBox(height: 6,),
+          SizedBox(height: 6),
 
           Align(
             alignment: Alignment(0.8, 0),
             child: OutlinedButton(
               style: ButtonStyle(
-                shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15.0)
-                )),
-                side: MaterialStateProperty.all(BorderSide(
-                  color: Color(0xFF6B4423),width: 2
-                ))
-              ),
-                onPressed: (){
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => HomeScreen(user: _user)),
-                        (route) => false,
-                  );
-                },
-                child: Text(
-                  l.t('skip'),
-                  style: TextStyle(
-                    color: Color(0xFF6B4423),
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.0),
                   ),
-                )
-            )
+                ),
+                side: MaterialStateProperty.all(
+                  BorderSide(color: Color(0xFF6B4423), width: 2),
+                ),
+              ),
+              onPressed: () async {
+                if (_user.id != 'guest') {
+                  await SessionService.saveSession(_user.id);
+                }
+                if (!mounted) return;
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => HomeScreen(user: _user)),
+                  (route) => false,
+                );
+              },
+              child: Text(
+                l.t('skip'),
+                style: TextStyle(
+                  color: Color(0xFF6B4423),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
 
           //SizedBox(height: 6,),
-
           CarouselSlider(
-              carouselController: carouselController,
-              items: AppLocalizations.currentLanguageCode == 'en' ?
+            carouselController: carouselController,
+            items: AppLocalizations.currentLanguageCode == 'en'
+                ? images
+                      .map(
+                        (item) => Container(
+                          margin: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(image: AssetImage(item)),
+                          ),
+                        ),
+                      )
+                      .toList()
+                : imagesAr
+                      .map(
+                        (item) => Container(
+                          margin: EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            image: DecorationImage(image: AssetImage(item)),
+                          ),
+                        ),
+                      )
+                      .toList(),
 
-              images.map((item)=> Container(
-                margin: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  image: DecorationImage(image: AssetImage(item),)
-                ),
-              )).toList()
-              :
-              imagesAr.map((item)=> Container(
-                margin: EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    image: DecorationImage(image: AssetImage(item),)
-                ),
-              )).toList(),
-
-              options: CarouselOptions(
-                height: 480,
-                enlargeCenterPage: true,
-                enableInfiniteScroll: false,
-                onPageChanged: (index,reason){
-                  setState(() {
-                    currentIndex = index;
-                  });
-                }
-              ),
-
+            options: CarouselOptions(
+              height: 480,
+              enlargeCenterPage: true,
+              enableInfiniteScroll: false,
+              onPageChanged: (index, reason) {
+                setState(() {
+                  currentIndex = index;
+                });
+              },
+            ),
           ),
 
-          SizedBox(height: 6,),
+          SizedBox(height: 6),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: images.asMap().entries.map((item) => Container(
-              height: 12,
-              width: 12,
-              margin: EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: currentIndex == item.key ? Color(0xFF6B4423) : Colors.grey
-              ),
-            )).toList(),
+            children: images
+                .asMap()
+                .entries
+                .map(
+                  (item) => Container(
+                    height: 12,
+                    width: 12,
+                    margin: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: currentIndex == item.key
+                          ? Color(0xFF6B4423)
+                          : Colors.grey,
+                    ),
+                  ),
+                )
+                .toList(),
           ),
 
-          SizedBox(height: 6,),
+          SizedBox(height: 6),
 
-          currentIndex == images.length - 1 ?
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(
-               backgroundColor: Color(0xFF82522a),
-               shadowColor: Colors.transparent,
-               fixedSize: const Size(150, 50),
-               shape: RoundedRectangleBorder(
-                 borderRadius: BorderRadius.circular(15),
-               ),
-             ),
-              onPressed: (){
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (_) => HomeScreen(user: _user)),
-                );
-              },
-              child: Text(l.t('finish'),style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 20
-              ),),
-
-
-          )
-          :
-          ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF82522a),
-                shadowColor: Colors.transparent,
-                fixedSize: const Size(150, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+          currentIndex == images.length - 1
+              ? ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF82522a),
+                    shadowColor: Colors.transparent,
+                    fixedSize: const Size(150, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () async {
+                    if (_user.id != 'guest') {
+                      await SessionService.saveSession(_user.id);
+                    }
+                    if (!mounted) return;
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => HomeScreen(user: _user),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    l.t('finish'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
+                )
+              : ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFF82522a),
+                    shadowColor: Colors.transparent,
+                    fixedSize: const Size(150, 50),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
+                  onPressed: () => carouselController.nextPage(
+                    duration: Duration(milliseconds: 300),
+                    curve: Curves.linear,
+                  ),
+                  child: Text(
+                    l.t('next'),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 20,
+                    ),
+                  ),
                 ),
-              ),
-              onPressed: ()=> carouselController.nextPage(
-                duration: Duration(milliseconds: 300), curve: Curves.linear
-              ),
-              child: Text(l.t('next'),style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 20
-              ),)
-          )
-
         ],
-      )
+      ),
     );
   }
 }
-
-

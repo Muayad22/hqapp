@@ -1,7 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'dart:io';
+
+import 'package:flutter/material.dart';
 import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/models/user_profile.dart';
+import 'package:hqapp/services/achievement_helpers.dart';
+import 'package:hqapp/services/firestore_service.dart';
+import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 
 class MapTrackingScreen extends StatefulWidget {
   const MapTrackingScreen({super.key});
@@ -54,9 +58,7 @@ class _MapTrackingScreenState extends State<MapTrackingScreen> {
                       'lib/dependencies/images/fullMap.png',
                       filterQuality: FilterQuality.high,
                       errorBuilder: (context, error, stackTrace) {
-                        return Center(
-                          child: Text(l.t('map_image_not_found')),
-                        );
+                        return Center(child: Text(l.t('map_image_not_found')));
                       },
                     ),
                   ),
@@ -253,7 +255,10 @@ class _QrCodeState extends State<QrCode> {
 class FoundCodeScreen extends StatefulWidget {
   final Barcode? value;
 
-  const FoundCodeScreen({super.key, required this.value});
+  /// When set (e.g. from home tab scan), successful opens count toward scan achievements.
+  final UserProfile? scanningUser;
+
+  const FoundCodeScreen({super.key, required this.value, this.scanningUser});
 
   @override
   State<FoundCodeScreen> createState() => _FoundCodeScreenState();
@@ -356,15 +361,11 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                             filterQuality: FilterQuality.high,
                             errorBuilder: (context, error, stackTrace) {
                               return Center(
-                                child: Text(
-                                  l.t('qr_location_image_not_found'),
-                                ),
+                                child: Text(l.t('qr_location_image_not_found')),
                               );
                             },
                           )
-                        : Center(
-                            child: Text(l.t('qr_no_location_image')),
-                          ),
+                        : Center(child: Text(l.t('qr_no_location_image'))),
                   ),
                 ),
               ),

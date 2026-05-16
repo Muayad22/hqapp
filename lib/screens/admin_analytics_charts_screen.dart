@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hqapp/localization/app_localizations.dart';
+import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/models/quiz_result.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
@@ -46,348 +47,595 @@ class AdminAnalyticsChartsScreen extends StatelessWidget {
               .length;
           final foreignCount = users.length - localCount;
           final allowedUserIds = users.map((u) => u.id).toSet();
+          final nUsers = users.length;
+          String countWithPct(int count) {
+            if (nUsers == 0) return '0';
+            final pct = ((count / nUsers) * 100).round();
+            return '$count ($pct%)';
+          }
 
-          return StreamBuilder<List<QuizResult>>(
-            stream: FirestoreService.leaderboardStream(),
-            builder: (context, quizSnap) {
-              if (quizSnap.connectionState == ConnectionState.waiting) {
+          return StreamBuilder<List<FeedbackEntry>>(
+            stream: FirestoreService.feedbackStream(),
+            builder: (context, fbSnap) {
+              if (fbSnap.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              if (quizSnap.hasError) {
-                return _ErrorState(message: quizSnap.error.toString());
+              if (fbSnap.hasError) {
+                return _ErrorState(message: fbSnap.error.toString());
               }
 
-              final results = quizSnap.data ?? const <QuizResult>[];
-              final filtered =
-                  results.where((r) => allowedUserIds.contains(r.userId)).toList();
+              final feedbackList = fbSnap.data ?? const <FeedbackEntry>[];
 
-              final attempts = filtered.length;
-              final totalQuestions = filtered.fold<int>(
-                0,
-                (sum, r) => sum + r.totalQuestions,
-              );
-              final totalCorrect = filtered.fold<int>(0, (sum, r) => sum + r.score);
-              final perfectScores = filtered
-                  .where((r) => r.totalQuestions > 0 && r.score == r.totalQuestions)
-                  .length;
-              final avgPercent = totalQuestions == 0
-                  ? 0.0
-                  : (totalCorrect / totalQuestions).clamp(0.0, 1.0);
+              return StreamBuilder<List<QuizResult>>(
+                stream: FirestoreService.leaderboardStream(),
+                builder: (context, quizSnap) {
+                  if (quizSnap.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (quizSnap.hasError) {
+                    return _ErrorState(message: quizSnap.error.toString());
+                  }
 
-              final userCounts = <String, int>{};
-              final nameByUser = <String, String>{for (final u in users) u.id: u.fullName};
-              for (final r in filtered) {
-                userCounts[r.userId] = (userCounts[r.userId] ?? 0) + 1;
-              }
-              final top = userCounts.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value));
+                  final results = quizSnap.data ?? const <QuizResult>[];
+                  final filtered = results
+                      .where((r) => allowedUserIds.contains(r.userId))
+                      .toList();
 
-              return SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _SectionTitle(title: l.t('admin_analytics_users_section')),
-                    const SizedBox(height: 12),
-                    Row(
+                  final attempts = filtered.length;
+                  final totalQuestions = filtered.fold<int>(
+                    0,
+                    (sum, r) => sum + r.totalQuestions,
+                  );
+                  final totalCorrect = filtered.fold<int>(
+                    0,
+                    (sum, r) => sum + r.score,
+                  );
+                  final perfectScores = filtered
+                      .where(
+                        (r) =>
+                            r.totalQuestions > 0 && r.score == r.totalQuestions,
+                      )
+                      .length;
+                  final avgPercent = totalQuestions == 0
+                      ? 0.0
+                      : (totalCorrect / totalQuestions).clamp(0.0, 1.0);
+
+                  final userCounts = <String, int>{};
+                  final nameByUser = <String, String>{
+                    for (final u in users) u.id: u.fullName,
+                  };
+                  for (final r in filtered) {
+                    userCounts[r.userId] = (userCounts[r.userId] ?? 0) + 1;
+                  }
+                  final top = userCounts.entries.toList()
+                    ..sort((a, b) => b.value.compareTo(a.value));
+
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_total_users'),
-                            value: users.length.toString(),
-                            color: const Color(0xFF6B4423),
+                        _SectionTitle(
+                          title: l.t('admin_analytics_users_section'),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_total_users'),
+                                value: users.length.toString(),
+                                color: const Color(0xFF6B4423),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_local'),
+                                value: countWithPct(localCount),
+                                color: const Color(0xFF2E7D32),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_foreign'),
+                                value: countWithPct(foreignCount),
+                                color: const Color(0xFFB8860B),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l.t('admin_analytics_visitor_split'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  height: 220,
+                                  child: PieChart(
+                                    PieChartData(
+                                      sectionsSpace: 2,
+                                      centerSpaceRadius: 52,
+                                      sections: [
+                                        PieChartSectionData(
+                                          value: localCount.toDouble(),
+                                          color: const Color(0xFF2E7D32),
+                                          title: localCount == 0
+                                              ? ''
+                                              : '${(localCount / (users.length) * 100).round()}%',
+                                          radius: 70,
+                                          titleStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        PieChartSectionData(
+                                          value: foreignCount.toDouble(),
+                                          color: const Color(0xFFB8860B),
+                                          title: foreignCount == 0
+                                              ? ''
+                                              : '${(foreignCount / (users.length) * 100).round()}%',
+                                          radius: 70,
+                                          titleStyle: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                _LegendRow(
+                                  leftLabel: l.t('admin_analytics_local'),
+                                  leftColor: const Color(0xFF2E7D32),
+                                  rightLabel: l.t('admin_analytics_foreign'),
+                                  rightColor: const Color(0xFFB8860B),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${l.t('admin_analytics_local')}: ${countWithPct(localCount)} · ${l.t('admin_analytics_foreign')}: ${countWithPct(foreignCount)}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_local'),
-                            value: localCount.toString(),
-                            color: const Color(0xFF2E7D32),
+                        const SizedBox(height: 24),
+                        _SectionTitle(
+                          title: l.t('admin_analytics_feedback_section'),
+                        ),
+                        const SizedBox(height: 12),
+                        _FeedbackAnalyticsBlock(
+                          l: l,
+                          feedbackList: feedbackList,
+                        ),
+                        const SizedBox(height: 24),
+                        _SectionTitle(
+                          title: l.t('admin_analytics_quiz_section'),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_attempts'),
+                                value: attempts.toString(),
+                                color: const Color(0xFF6B4423),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_avg_score'),
+                                value: '${(avgPercent * 100).round()}%',
+                                color: const Color(0xFF8B4513),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _MetricChip(
+                                label: l.t('admin_analytics_perfect_scores'),
+                                value: perfectScores.toString(),
+                                color: const Color(0xFFDAA520),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l.t('admin_analytics_quiz_overview_chart'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                SizedBox(
+                                  height: 200,
+                                  child: BarChart(
+                                    BarChartData(
+                                      gridData: const FlGridData(show: false),
+                                      borderData: FlBorderData(show: false),
+                                      titlesData: FlTitlesData(
+                                        topTitles: const AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: false,
+                                          ),
+                                        ),
+                                        rightTitles: const AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: false,
+                                          ),
+                                        ),
+                                        leftTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            reservedSize: 34,
+                                            getTitlesWidget: (value, meta) {
+                                              return Text(
+                                                value.toInt().toString(),
+                                                style: TextStyle(
+                                                  color: Colors.grey[600],
+                                                  fontSize: 10,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        bottomTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            getTitlesWidget: (value, meta) {
+                                              final idx = value.toInt();
+                                              final label = idx == 0
+                                                  ? l.t(
+                                                      'admin_analytics_attempts',
+                                                    )
+                                                  : idx == 1
+                                                  ? l.t(
+                                                      'admin_analytics_perfect_scores',
+                                                    )
+                                                  : l.t(
+                                                      'admin_analytics_avg_score',
+                                                    );
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 6,
+                                                ),
+                                                child: Text(
+                                                  label,
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ),
+                                      barGroups: [
+                                        BarChartGroupData(
+                                          x: 0,
+                                          barRods: [
+                                            BarChartRodData(
+                                              toY: attempts.toDouble(),
+                                              color: const Color(0xFF6B4423),
+                                              width: 16,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ],
+                                        ),
+                                        BarChartGroupData(
+                                          x: 1,
+                                          barRods: [
+                                            BarChartRodData(
+                                              toY: perfectScores.toDouble(),
+                                              color: const Color(0xFFDAA520),
+                                              width: 16,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ],
+                                        ),
+                                        BarChartGroupData(
+                                          x: 2,
+                                          barRods: [
+                                            BarChartRodData(
+                                              toY: (avgPercent * 100),
+                                              color: const Color(0xFF8B4513),
+                                              width: 16,
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                Text(
+                                  l.t(
+                                    'admin_analytics_accuracy_detail',
+                                    params: {
+                                      'correct': totalCorrect.toString(),
+                                      'total': totalQuestions.toString(),
+                                    },
+                                  ),
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_foreign'),
-                            value: foreignCount.toString(),
-                            color: const Color(0xFFB8860B),
+                        const SizedBox(height: 16),
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  l.t('admin_analytics_top_users'),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                if (top.isEmpty)
+                                  Text(
+                                    l.t('admin_analytics_empty_quiz'),
+                                    style: TextStyle(color: Colors.grey[700]),
+                                  )
+                                else
+                                  ...top.take(5).map((e) {
+                                    final name = nameByUser[e.key] ?? e.key;
+                                    return ListTile(
+                                      dense: true,
+                                      contentPadding: EdgeInsets.zero,
+                                      leading: CircleAvatar(
+                                        backgroundColor: const Color(
+                                          0xFF6B4423,
+                                        ).withOpacity(0.1),
+                                        child: Text(
+                                          name.isNotEmpty
+                                              ? name[0].toUpperCase()
+                                              : '?',
+                                          style: const TextStyle(
+                                            color: Color(0xFF6B4423),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      title: Text(name, maxLines: 1),
+                                      trailing: Text(
+                                        l.t(
+                                          'admin_analytics_attempts_label',
+                                          params: {'value': e.value.toString()},
+                                        ),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF6B4423),
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                              ],
+                            ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l.t('admin_analytics_visitor_split'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              height: 220,
-                              child: PieChart(
-                                PieChartData(
-                                  sectionsSpace: 2,
-                                  centerSpaceRadius: 52,
-                                  sections: [
-                                    PieChartSectionData(
-                                      value: localCount.toDouble(),
-                                      color: const Color(0xFF2E7D32),
-                                      title: localCount == 0
-                                          ? ''
-                                          : '${(localCount / (users.length) * 100).round()}%',
-                                      radius: 70,
-                                      titleStyle: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    PieChartSectionData(
-                                      value: foreignCount.toDouble(),
-                                      color: const Color(0xFFB8860B),
-                                      title: foreignCount == 0
-                                          ? ''
-                                          : '${(foreignCount / (users.length) * 100).round()}%',
-                                      radius: 70,
-                                      titleStyle: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            _LegendRow(
-                              leftLabel: l.t('admin_analytics_local'),
-                              leftColor: const Color(0xFF2E7D32),
-                              rightLabel: l.t('admin_analytics_foreign'),
-                              rightColor: const Color(0xFFB8860B),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    _SectionTitle(title: l.t('admin_analytics_quiz_section')),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_attempts'),
-                            value: attempts.toString(),
-                            color: const Color(0xFF6B4423),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_avg_score'),
-                            value: '${(avgPercent * 100).round()}%',
-                            color: const Color(0xFF8B4513),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _MetricChip(
-                            label: l.t('admin_analytics_perfect_scores'),
-                            value: perfectScores.toString(),
-                            color: const Color(0xFFDAA520),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l.t('admin_analytics_quiz_overview_chart'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 14),
-                            SizedBox(
-                              height: 200,
-                              child: BarChart(
-                                BarChartData(
-                                  gridData: const FlGridData(show: false),
-                                  borderData: FlBorderData(show: false),
-                                  titlesData: FlTitlesData(
-                                    topTitles: const AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                    rightTitles: const AxisTitles(
-                                      sideTitles: SideTitles(showTitles: false),
-                                    ),
-                                    leftTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        reservedSize: 34,
-                                        getTitlesWidget: (value, meta) {
-                                          return Text(
-                                            value.toInt().toString(),
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 10,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                    bottomTitles: AxisTitles(
-                                      sideTitles: SideTitles(
-                                        showTitles: true,
-                                        getTitlesWidget: (value, meta) {
-                                          final idx = value.toInt();
-                                          final label = idx == 0
-                                              ? l.t('admin_analytics_attempts')
-                                              : idx == 1
-                                                  ? l.t('admin_analytics_perfect_scores')
-                                                  : l.t('admin_analytics_avg_score');
-                                          return Padding(
-                                            padding: const EdgeInsets.only(top: 6),
-                                            child: Text(
-                                              label,
-                                              style: const TextStyle(fontSize: 10),
-                                              textAlign: TextAlign.center,
-                                            ),
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ),
-                                  barGroups: [
-                                    BarChartGroupData(
-                                      x: 0,
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: attempts.toDouble(),
-                                          color: const Color(0xFF6B4423),
-                                          width: 16,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                      ],
-                                    ),
-                                    BarChartGroupData(
-                                      x: 1,
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: perfectScores.toDouble(),
-                                          color: const Color(0xFFDAA520),
-                                          width: 16,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                      ],
-                                    ),
-                                    BarChartGroupData(
-                                      x: 2,
-                                      barRods: [
-                                        BarChartRodData(
-                                          toY: (avgPercent * 100),
-                                          color: const Color(0xFF8B4513),
-                                          width: 16,
-                                          borderRadius: BorderRadius.circular(6),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              l.t(
-                                'admin_analytics_accuracy_detail',
-                                params: {
-                                  'correct': totalCorrect.toString(),
-                                  'total': totalQuestions.toString(),
-                                },
-                              ),
-                              style: TextStyle(color: Colors.grey[700]),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l.t('admin_analytics_top_users'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            if (top.isEmpty)
-                              Text(
-                                l.t('admin_analytics_empty_quiz'),
-                                style: TextStyle(color: Colors.grey[700]),
-                              )
-                            else
-                              ...top.take(5).map((e) {
-                                final name = nameByUser[e.key] ?? e.key;
-                                return ListTile(
-                                  dense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                  leading: CircleAvatar(
-                                    backgroundColor: const Color(0xFF6B4423)
-                                        .withOpacity(0.1),
-                                    child: Text(
-                                      name.isNotEmpty
-                                          ? name[0].toUpperCase()
-                                          : '?',
-                                      style: const TextStyle(
-                                        color: Color(0xFF6B4423),
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                  title: Text(name, maxLines: 1),
-                                  trailing: Text(
-                                    l.t(
-                                      'admin_analytics_attempts_label',
-                                      params: {'value': e.value.toString()},
-                                    ),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF6B4423),
-                                    ),
-                                  ),
-                                );
-                              }),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               );
             },
           );
         },
       ),
+    );
+  }
+}
+
+class _FeedbackAnalyticsBlock extends StatelessWidget {
+  const _FeedbackAnalyticsBlock({required this.l, required this.feedbackList});
+
+  final AppLocalizations l;
+  final List<FeedbackEntry> feedbackList;
+
+  @override
+  Widget build(BuildContext context) {
+    final fbTotal = feedbackList.length;
+    final fbGuest = feedbackList.where((f) => f.isGuest).length;
+    final fbRegistered = fbTotal - fbGuest;
+    final guestPctFb = fbTotal == 0 ? 0 : ((fbGuest / fbTotal) * 100).round();
+    final userPctFb = fbTotal == 0
+        ? 0
+        : ((fbRegistered / fbTotal) * 100).round();
+
+    final ratedAll = feedbackList
+        .where((f) => f.rating != null)
+        .map((f) => f.rating!)
+        .toList();
+    final avgOverall = ratedAll.isEmpty
+        ? null
+        : ratedAll.reduce((a, b) => a + b) / ratedAll.length;
+
+    final guestRated = feedbackList
+        .where((f) => f.isGuest && f.rating != null)
+        .map((f) => f.rating!)
+        .toList();
+    final userRated = feedbackList
+        .where((f) => !f.isGuest && f.rating != null)
+        .map((f) => f.rating!)
+        .toList();
+    final avgGuest = guestRated.isEmpty
+        ? null
+        : guestRated.reduce((a, b) => a + b) / guestRated.length;
+    final avgUser = userRated.isEmpty
+        ? null
+        : userRated.reduce((a, b) => a + b) / userRated.length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_total'),
+                value: fbTotal.toString(),
+                color: const Color(0xFF6B4423),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_avg_rating'),
+                value: avgOverall == null ? '—' : avgOverall.toStringAsFixed(1),
+                color: const Color(0xFF8B4513),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_guest_pct'),
+                value: fbTotal == 0 ? '0%' : '$guestPctFb%',
+                color: const Color(0xFF455A64),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_user_pct'),
+                value: fbTotal == 0 ? '0%' : '$userPctFb%',
+                color: const Color(0xFF2E7D32),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_avg_guest'),
+                value: avgGuest == null ? '—' : avgGuest.toStringAsFixed(1),
+                color: const Color(0xFF455A64),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _MetricChip(
+                label: l.t('admin_analytics_feedback_avg_user'),
+                value: avgUser == null ? '—' : avgUser.toStringAsFixed(1),
+                color: const Color(0xFF2E7D32),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (fbTotal == 0)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                l.t('admin_analytics_feedback_empty'),
+                style: TextStyle(color: Colors.grey[700]),
+              ),
+            ),
+          )
+        else
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l.t('admin_analytics_feedback_source_split'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    height: 200,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 44,
+                        sections: [
+                          PieChartSectionData(
+                            value: fbGuest.toDouble(),
+                            color: const Color(0xFF455A64),
+                            title: fbGuest == 0 ? '' : '$guestPctFb%',
+                            radius: 64,
+                            titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            value: fbRegistered.toDouble(),
+                            color: const Color(0xFF6B4423),
+                            title: fbRegistered == 0 ? '' : '$userPctFb%',
+                            radius: 64,
+                            titleStyle: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _LegendRow(
+                    leftLabel: l.t('admin_analytics_feedback_guest_legend'),
+                    leftColor: const Color(0xFF455A64),
+                    rightLabel: l.t('admin_analytics_feedback_user_legend'),
+                    rightColor: const Color(0xFF6B4423),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${l.t('admin_analytics_feedback_guest_legend')}: $fbGuest ($guestPctFb%) · ${l.t('admin_analytics_feedback_user_legend')}: $fbRegistered ($userPctFb%)',
+                    style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+                  ),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 }
@@ -401,9 +649,9 @@ class _SectionTitle extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: const Color(0xFF6B4423),
-          ),
+        fontWeight: FontWeight.bold,
+        color: const Color(0xFF6B4423),
+      ),
     );
   }
 }
@@ -557,4 +805,3 @@ class _ErrorState extends StatelessWidget {
     );
   }
 }
-

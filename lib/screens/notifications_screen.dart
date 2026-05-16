@@ -33,11 +33,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       '⭐ Achievement Unlocked: Flawless Victory!': l.t(
         'achievement_unlocked_flawless_victory_title',
       ),
+      '📷 Achievement Unlocked: First Scan!': l.t(
+        'achievement_unlocked_first_scan_title',
+      ),
+      '🧭 Achievement Unlocked: Keen Scanner!': l.t(
+        'achievement_unlocked_keen_scanner_title',
+      ),
       // Arabic variants (in case old notifications were created in Arabic)
       '🎯 تم فتح إنجاز: أول اختبار!': l.t('achievement_unlocked_first_quiz_title'),
       '🏆 تم فتح إنجاز: نتيجة كاملة!': l.t('achievement_unlocked_perfect_score_title'),
       '📚 تم فتح إنجاز: خبير الاختبارات!': l.t('achievement_unlocked_quiz_master_title'),
       '⭐ تم فتح إنجاز: انتصار مثالي!': l.t('achievement_unlocked_flawless_victory_title'),
+      '📷 تم فتح إنجاز: أول مسح!': l.t('achievement_unlocked_first_scan_title'),
+      '🧭 تم فتح إنجاز: مساح نشيط!': l.t('achievement_unlocked_keen_scanner_title'),
     };
 
     final messageMap = <String, String>{
@@ -49,6 +57,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           l.t('achievement_unlocked_quiz_master_message'),
       'Incredible! You got a perfect score on a 5-question quiz!':
           l.t('achievement_unlocked_flawless_victory_message'),
+      "Congratulations! You've completed 3 quizzes. You're becoming a quiz master!":
+          l.t('achievement_unlocked_quiz_master_message'),
+      'Incredible! You got a perfect score on a quiz with 3 or more questions!':
+          l.t('achievement_unlocked_flawless_victory_message'),
+      'You opened your first heritage location from a QR code. Keep scanning!':
+          l.t('achievement_unlocked_first_scan_message'),
+      'You scanned 5 heritage locations. Great exploring!':
+          l.t('achievement_unlocked_keen_scanner_message'),
       // Arabic variants
       'لقد أكملت أول اختبار لك! استمر في الاستكشاف لفتح المزيد من الإنجازات.':
           l.t('achievement_unlocked_first_quiz_message'),
@@ -58,6 +74,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           l.t('achievement_unlocked_quiz_master_message'),
       'رائع! لقد حققت نتيجة كاملة في اختبار من 5 أسئلة!':
           l.t('achievement_unlocked_flawless_victory_message'),
+      'تهانينا! لقد أكملت 3 اختبارات. أنت تصبح خبيراً في الاختبارات!':
+          l.t('achievement_unlocked_quiz_master_message'),
+      'رائع! لقد حققت نتيجة كاملة في اختبار من 3 أسئلة فأكثر!':
+          l.t('achievement_unlocked_flawless_victory_message'),
+      'لقد فتحت أول موقع تراثي من رمز QR. واصل المسح!':
+          l.t('achievement_unlocked_first_scan_message'),
+      'لقد فتحت 5 مواقع تراثية بالمسح. استكشاف رائع!':
+          l.t('achievement_unlocked_keen_scanner_message'),
     };
 
     String title = notification.title;

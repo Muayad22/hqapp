@@ -180,7 +180,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
       final quizCount = quizResults.length;
       final hasFullMark = score == questions.length;
       final hasPerfectScore =
-          score == questions.length && questions.length >= 5;
+          score == questions.length && questions.length >= 3;
 
       // Create achievement notifications
       if (quizCount == 1) {
@@ -219,7 +219,7 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         }
       }
 
-      if (quizCount == 5) {
+      if (quizCount == 3) {
         await FirestoreService.createNotification(
           userId: widget.user.id,
           title: l.t('achievement_unlocked_quiz_master_title'),

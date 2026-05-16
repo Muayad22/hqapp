@@ -31,6 +31,9 @@ class UserProfile {
   final String visitorType;
   final AdminRole adminRole;
 
+  /// When true, sign-in is blocked (super admin can toggle in Manage Users).
+  final bool accountDisabled;
+
   const UserProfile({
     required this.id,
     required this.fullName,
@@ -38,6 +41,7 @@ class UserProfile {
     required this.contactNo,
     this.visitorType = 'Local',
     this.adminRole = AdminRole.none,
+    this.accountDisabled = false,
   });
 
   /// True for normal admin or super admin (admin portal access).
@@ -58,6 +62,14 @@ class UserProfile {
     }
   }
 
+  static bool _parseAccountDisabled(Object? raw) {
+    if (raw == null) return false;
+    if (raw is bool) return raw;
+    if (raw is num) return raw != 0;
+    final s = raw.toString().trim().toLowerCase();
+    return s == 'true' || s == '1' || s == 'y' || s == 'yes';
+  }
+
   factory UserProfile.fromMap(String id, Map<String, dynamic> data) {
     return UserProfile(
       id: id,
@@ -66,6 +78,7 @@ class UserProfile {
       contactNo: data['contactNo'] as String? ?? '',
       visitorType: data['visitorType'] as String? ?? 'Local',
       adminRole: AdminRole.fromDb(data['admin']),
+      accountDisabled: _parseAccountDisabled(data['accountDisabled']),
     );
   }
 
@@ -76,6 +89,7 @@ class UserProfile {
       'contactNo': contactNo,
       'visitorType': visitorType,
       'admin': adminRole.toDb(),
+      'accountDisabled': accountDisabled,
     };
   }
 
@@ -84,6 +98,7 @@ class UserProfile {
     String? contactNo,
     String? visitorType,
     AdminRole? adminRole,
+    bool? accountDisabled,
   }) {
     return UserProfile(
       id: id,
@@ -92,6 +107,7 @@ class UserProfile {
       contactNo: contactNo ?? this.contactNo,
       visitorType: visitorType ?? this.visitorType,
       adminRole: adminRole ?? this.adminRole,
+      accountDisabled: accountDisabled ?? this.accountDisabled,
     );
   }
 
@@ -103,6 +119,7 @@ class UserProfile {
       contactNo: '',
       visitorType: 'Local',
       adminRole: AdminRole.none,
+      accountDisabled: false,
     );
   }
 }
