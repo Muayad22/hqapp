@@ -282,6 +282,12 @@ class AppLocalizations {
       'qr_title': 'QR Scanner',
       'qr_scan_again': 'Scan Again',
       'qr_location_title': 'Your Location',
+      'default':'Default',
+      '35-38_student_rooms':'35-38 students rooms',
+      '40-41_sitting_area':'40-41 Sitting area',
+      '44-46_kitchen':'44-46 Kitchen',
+      '56_imam_room':'56 Imam\'s room',
+      '58_walis_barza':'58 Walis barza',
       'qr_location_image_not_found': 'Location image not found',
       'qr_no_location_image': 'No location image found',
       // Admin
@@ -399,6 +405,7 @@ class AppLocalizations {
           'Failed to reset password. Please try again.',
       'video_player':'Video Player',
       'audio_player':'Audio Player',
+
     },
     'ar': {
       'app_title': 'Heritage Quest', //  title
@@ -621,6 +628,12 @@ class AppLocalizations {
       'qr_title': 'قارئ QR',
       'qr_scan_again': 'امسح مرة أخرى',
       'qr_location_title': 'موقعك',
+      'default':'طبيعي',
+      '35-38_student_rooms':'38-35 غرف الطلاب',
+      '40-41_sitting_area':'41-40 منطقة جلوس',
+      '44-46_kitchen':'46-44 المطبخ',
+      '56_imam_room':'56 غرفة الإمام',
+      '58_walis_barza':'58 برزة الوالي',
       'qr_location_image_not_found': 'لم يتم العثور على صورة الموقع',
       'qr_no_location_image': 'لا توجد صورة للموقع',
       // Admin

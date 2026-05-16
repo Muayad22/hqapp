@@ -195,7 +195,28 @@ class FormValidators {
     return null;
   }
 
+  static String? validateFeedback(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Feedback cannot be empty';
+    }
+    if (!RegExp(r'^[a-zA-Z0-9!?.,]+$').hasMatch(value)) {
+      return 'The feedback can only contain !?., as special characters';
+    }
+    return null;
+  }
 
+  static String? validateLeaderboardSearch(String? value) {
+    if (value == null) {
+      return 'username can\'t be null' ;
+    }
+    if (value.isEmpty) {
+      return 'List all users';
+    }
+    if (value.isNotEmpty) {
+      return 'List the users that contain the typed in character';
+    }
+    return null;
+  }
 
   /*
   static String? validateServiceRequest(

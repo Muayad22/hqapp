@@ -267,5 +267,39 @@ void main() {
       });
     });
 
+    // --- Feedback Validation Tests ---
+    group('validateFeedback', () {
+      test('should return error if Feedback is empty', () {
+        expect(FormValidators.validateFeedback(''),'Feedback cannot be empty',);
+      });
+
+      test('should return error if Feedback is null', () {
+        expect(FormValidators.validateFeedback(null), 'Feedback cannot be empty',);
+      });
+
+      test('should return error if Feedback has special characters other than !?.,', () {
+        expect(FormValidators.validateFeedback('#/_@asd123'), 'The feedback can only contain !?., as special characters',);
+      });
+
+      test('should return null if Feedback only has letters, numbers and !?,.', () {
+        expect(FormValidators.validateFeedback('asd123!?,.'), null,);
+      });
+    });
+
+    // --- Leaderboard Search Validation Tests ---
+    group('validateLeaderboardSearch', () {
+      test('should return error if Search input is null', () {
+        expect(FormValidators.validateLeaderboardSearch(null), 'username can\'t be null',);
+      });
+
+      test('should return all users if Search field is empty', () {
+        expect(FormValidators.validateLeaderboardSearch(''),'List all users',);
+      });
+
+      test('should return users that contain the inputted character', () {
+        expect(FormValidators.validateLeaderboardSearch('#/_@asd123'), 'List the users that contain the typed in character',);
+      });
+    });
+
   });
 }

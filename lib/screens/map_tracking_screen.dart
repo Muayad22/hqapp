@@ -260,6 +260,58 @@ class FoundCodeScreen extends StatefulWidget {
 }
 
 class _FoundCodeScreenState extends State<FoundCodeScreen> {
+  late String? qrValue= widget.value?.code;
+  late String? imageValue= widget.value?.code;
+  List<String> items = [];
+  List<String> items2 = [];
+  String? value1;
+  //String? selectedValue;
+  void checkImage(){
+    final l = AppLocalizations.of(context);
+    if (qrValue == 'location1'){
+      items = [l.t('default'),l.t('35-38_student_rooms'),l.t('40-41_sitting_area'),l.t('44-46_kitchen'),l.t('56_imam_room'),l.t('58_walis_barza')];
+    }
+    else if (qrValue == 'location3'){
+      items = [l.t('default'),l.t('56_imam_room'),l.t('58_walis_barza')];
+      //items = items2;
+    }
+  }
+  void changeImage(){
+    final l = AppLocalizations.of(context);
+    //location 1
+    if (qrValue=='location1') {
+      if (value1 == items[0]) {
+        imageValue = widget.value?.code;
+      } else if (value1 == items[1]) {
+        imageValue = 'route/route_to_35-38';
+      } else if (value1 == items[2]) {
+        imageValue = 'route/route_to_40-41';
+      } else if (value1 == items[3]) {
+        imageValue = 'route/route_to_44-46';
+      } else if (value1 == items[4]) {
+        imageValue = 'route/route_to_56';
+      } else if (value1 == items[5]) {
+        imageValue = 'route/route_to_58';
+      }
+    }else if(qrValue=='location3') {
+      //location 3
+      if (value1 == items[0]) {
+        imageValue = widget.value?.code;
+      } else if (value1 == items[1]) {
+        imageValue = 'route/route2_to_56';
+      } else if (value1 == items[2]) {
+        imageValue = 'route/route2_to_58';
+      }
+    }
+
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    checkImage();
+    //selectedValue = items[0];
+  }
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -300,7 +352,7 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                     borderRadius: BorderRadius.circular(20.0),
                     child: widget.value?.code != null
                         ? Image.asset(
-                            'lib/dependencies/images/${widget.value!.code}.png',
+                            'lib/dependencies/images/$imageValue.png',
                             filterQuality: FilterQuality.high,
                             errorBuilder: (context, error, stackTrace) {
                               return Center(
@@ -316,12 +368,46 @@ class _FoundCodeScreenState extends State<FoundCodeScreen> {
                   ),
                 ),
               ),
+              Container(
+                margin: EdgeInsets.all(16),
+                padding: EdgeInsets.symmetric(horizontal: 12,vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Color(0xFF8E5C34),width: 4)
+                ),
+
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    hint: Text(l.t('Select Route For a Room')),
+                    value: value1,
+                    isExpanded: true,
+                    iconSize:  36,
+                    icon: Icon(Icons.arrow_drop_down,color: Color(0xFF8E5C34),),
+                    items: items.map(buildMenuItem).toList(),
+                    onChanged: (value) => setState(() {
+                      this.value1 = value;
+                      changeImage();
+                      print(value1);
+                      print(imageValue);
+                    }),
+                    menuMaxHeight: 200,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
+  DropdownMenuItem<String> buildMenuItem(String item) =>
+      DropdownMenuItem(
+        value: item,
+        child: Text(
+          item,
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20,color: Color(0xFF593A1D)),
+        ),
+      );
 
   Widget _buildGradientButton({required String text, VoidCallback? onPressed}) {
     return Container(
