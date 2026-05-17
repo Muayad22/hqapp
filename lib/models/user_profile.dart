@@ -1,3 +1,5 @@
+import 'package:hqapp/models/adminrole.dart';
+
 /// Staff tier stored in Realtime DB field `admin`: N, Y (admin), S (super admin).
 enum AdminRole {
   none,
@@ -34,6 +36,9 @@ class UserProfile {
   /// When true, sign-in is blocked (super admin can toggle in Manage Users).
   final bool accountDisabled;
 
+  /// Page-level access for normal admins (super admin ignores and has full access).
+  final AdminPermissions adminPermissions;
+
   const UserProfile({
     required this.id,
     required this.fullName,
@@ -42,6 +47,7 @@ class UserProfile {
     this.visitorType = 'Local',
     this.adminRole = AdminRole.none,
     this.accountDisabled = false,
+    this.adminPermissions = AdminPermissions.none,
   });
 
   /// True for normal admin or super admin (admin portal access).
@@ -49,6 +55,10 @@ class UserProfile {
       adminRole == AdminRole.admin || adminRole == AdminRole.superAdmin;
 
   bool get isSuperAdmin => adminRole == AdminRole.superAdmin;
+
+  /// Effective permissions after applying super-admin override.
+  AdminPermissions get effectivePermissions =>
+      isSuperAdmin ? AdminPermissions.all : adminPermissions;
 
   /// Key for [AppLocalizations.t] describing this user's staff role.
   String get staffRoleL10nKey {
@@ -79,6 +89,15 @@ class UserProfile {
       visitorType: data['visitorType'] as String? ?? 'Local',
       adminRole: AdminRole.fromDb(data['admin']),
       accountDisabled: _parseAccountDisabled(data['accountDisabled']),
+      adminPermissions: AdminPermissions.fromMap(
+        data['adminPermissions'] is Map
+            ? Map<String, dynamic>.from(
+                (data['adminPermissions'] as Map).map(
+                  (k, v) => MapEntry(k.toString(), v),
+                ),
+              )
+            : null,
+      ),
     );
   }
 
@@ -90,6 +109,8 @@ class UserProfile {
       'visitorType': visitorType,
       'admin': adminRole.toDb(),
       'accountDisabled': accountDisabled,
+      if (hasStaffAccess && !isSuperAdmin)
+        'adminPermissions': adminPermissions.toMap(),
     };
   }
 
@@ -99,6 +120,7 @@ class UserProfile {
     String? visitorType,
     AdminRole? adminRole,
     bool? accountDisabled,
+    AdminPermissions? adminPermissions,
   }) {
     return UserProfile(
       id: id,
@@ -108,6 +130,7 @@ class UserProfile {
       visitorType: visitorType ?? this.visitorType,
       adminRole: adminRole ?? this.adminRole,
       accountDisabled: accountDisabled ?? this.accountDisabled,
+      adminPermissions: adminPermissions ?? this.adminPermissions,
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:hqapp/widgets/admin_permissions_editor.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   final UserProfile viewer;
@@ -149,6 +150,36 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
     }
   }
 
+  Future<void> _editAdminPermissions(
+    BuildContext context,
+    UserProfile profile,
+  ) async {
+    final l = AppLocalizations.of(context);
+    final result = await AdminPermissionsEditor.show(
+      context,
+      target: profile,
+      initial: profile.adminPermissions,
+    );
+    if (result == null || !context.mounted) return;
+    try {
+      await FirestoreService.updateUserAdminPermissions(profile.id, result);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.t('admin_permissions_saved'))),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l.t('admin_update_user_error', params: {'error': e.toString()}),
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   (IconData, Color) _roleIconStyle(UserProfile profile) {
     switch (profile.adminRole) {
       case AdminRole.none:
@@ -258,6 +289,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> {
                       ? Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            if (profile.adminRole == AdminRole.admin)
+                              IconButton(
+                                icon: const Icon(
+                                  Icons.tune,
+                                  color: Color(0xFF6B4423),
+                                ),
+                                onPressed: () =>
+                                    _editAdminPermissions(context, profile),
+                                tooltip: l.t('admin_edit_permissions'),
+                              ),
                             IconButton(
                               icon: Icon(iconData, color: iconColor),
                               onPressed: () =>

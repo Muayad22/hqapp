@@ -7,11 +7,14 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:crypto/crypto.dart';
+import 'package:hqapp/models/adminrole.dart';
+import 'package:hqapp/models/ai_chat_message.dart';
 import 'package:hqapp/models/disabled_account_appeal.dart';
 import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/services/achievement_helpers.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/models/notification_entry.dart';
+import 'package:hqapp/models/quiz_question_entry.dart';
 import 'package:hqapp/models/quiz_result.dart';
 import 'package:hqapp/models/user_profile.dart';
 
@@ -95,6 +98,8 @@ class FirestoreService {
   /// security model permits (the app re-checks password before writing). Staff need
   /// `.read` to list appeals in the admin app.
   static const _disabledAccountAppealsPath = 'disabledAccountAppeals';
+  static const _quizContentPath = 'quizContent';
+  static const _aiChatMessagesPath = 'aiChatMessages';
 
   static String _hashPassword(String value) {
     final bytes = utf8.encode(value);
@@ -781,6 +786,52 @@ class FirestoreService {
     });
   }
 
+  static DatabaseReference _aiChatMessagesRef(String userId) =>
+      _db.child(_usersPath).child(userId).child(_aiChatMessagesPath);
+
+  static Future<List<AiChatMessage>> loadAiChatMessages(String userId) async {
+    if (userId.isEmpty || userId == 'guest') return [];
+    try {
+      final snapshot = await _aiChatMessagesRef(userId).get().timeout(
+            const Duration(seconds: 10),
+            onTimeout: () => throw Exception('Connection timeout'),
+          );
+      if (!snapshot.exists) return [];
+
+      final data = snapshot.value as Map<dynamic, dynamic>?;
+      if (data == null) return [];
+
+      final messages = data.entries.map((entry) {
+        return AiChatMessage.fromMap(
+          entry.key as String,
+          Map<String, dynamic>.from(entry.value as Map),
+        );
+      }).toList();
+      messages.sort((a, b) => a.date.compareTo(b.date));
+      return messages;
+    } catch (e) {
+      if (kDebugMode) {
+        print('loadAiChatMessages error: $e');
+      }
+      return [];
+    }
+  }
+
+  static Future<void> saveAiChatMessage({
+    required String userId,
+    required String text,
+    required DateTime date,
+    required bool isSentByMe,
+  }) async {
+    if (userId.isEmpty || userId == 'guest') return;
+    if (text.trim().isEmpty) return;
+    await _aiChatMessagesRef(userId).push().set({
+      'text': text.trim(),
+      'date': date.toIso8601String(),
+      'isSentByMe': isSentByMe,
+    });
+  }
+
   static Stream<List<FeedbackEntry>> feedbackStream() {
     return _db
         .child(_feedbackPath)
@@ -942,9 +993,30 @@ class FirestoreService {
     String userId,
     bool grantAdmin,
   ) async {
+    if (grantAdmin) {
+      await _db.child(_usersPath).child(userId).update({
+        'admin': 'Y',
+        'adminPermissions': AdminPermissions.defaultForNewAdmin.toMap(),
+      });
+    } else {
+      await _db.child(_usersPath).child(userId).update({
+        'admin': 'N',
+        'adminPermissions': null,
+      });
+    }
+  }
+
+  static Future<void> updateUserAdminPermissions(
+    String userId,
+    AdminPermissions permissions,
+  ) async {
     await _db.child(_usersPath).child(userId).update({
-      'admin': grantAdmin ? 'Y' : 'N',
+      'adminPermissions': permissions.toMap(),
     });
+  }
+
+  static Future<void> deleteFeedback(String feedbackId) async {
+    await _db.child(_feedbackPath).child(feedbackId).remove();
   }
 
   static Future<void> updateUserPoints({
@@ -1814,5 +1886,60 @@ class FirestoreService {
       }
       rethrow;
     }
+  }
+
+  static DatabaseReference _quizCategoryRef(String category) =>
+      _db.child(_quizContentPath).child(category);
+
+  static Stream<List<QuizQuestionEntry>> quizQuestionsStream(String category) {
+    return _quizCategoryRef(category).child('questions').onValue.map((event) {
+      if (!event.snapshot.exists) return <QuizQuestionEntry>[];
+      final data = event.snapshot.value;
+      if (data is! Map) return <QuizQuestionEntry>[];
+      final list = <QuizQuestionEntry>[];
+      for (final entry in data.entries) {
+        final raw = entry.value;
+        if (raw is! Map) continue;
+        list.add(
+          QuizQuestionEntry.fromMap(
+            id: entry.key.toString(),
+            category: category,
+            data: Map<String, dynamic>.from(
+              raw.map((k, v) => MapEntry(k.toString(), v)),
+            ),
+          ),
+        );
+      }
+      return list;
+    });
+  }
+
+  static Future<String> addQuizQuestion({
+    required String category,
+    required QuizQuestionEntry entry,
+  }) async {
+    final ref = _quizCategoryRef(category).child('questions').push();
+    await ref.set(entry.toMap());
+    return ref.key!;
+  }
+
+  static Future<void> updateQuizQuestion({
+    required String category,
+    required QuizQuestionEntry entry,
+  }) async {
+    await _quizCategoryRef(category)
+        .child('questions')
+        .child(entry.id)
+        .update(entry.toMap());
+  }
+
+  static Future<void> deleteQuizQuestion({
+    required String category,
+    required String questionId,
+  }) async {
+    await _quizCategoryRef(category)
+        .child('questions')
+        .child(questionId)
+        .remove();
   }
 }

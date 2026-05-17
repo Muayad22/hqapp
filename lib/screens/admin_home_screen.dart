@@ -5,6 +5,7 @@ import 'package:hqapp/screens/admin_feedback_screen.dart';
 import 'package:hqapp/screens/admin_analytics_charts_screen.dart';
 import 'package:hqapp/screens/leaderboard_screen.dart';
 import 'package:hqapp/screens/login_screen.dart';
+import 'package:hqapp/screens/edit_quiz.dart';
 import 'package:hqapp/screens/manage_users_screen.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/services/session_service.dart';
@@ -241,71 +242,130 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ),
             const SizedBox(height: 24),
             Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                // Taller cells so Arabic (RTL) titles/subtitles do not overflow.
-                childAspectRatio: 0.88,
-                children: [
-                  _AdminCard(
-                    icon: Icons.group,
-                    title: l.t('admin_manage_users'),
-                    subtitle: l.t('admin_manage_users_subtitle'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => ManageUsersScreen(viewer: widget.user),
-                      ),
-                    ),
-                  ),
-                  _AdminCard(
-                    icon: Icons.support_agent,
-                    title: l.t('admin_user_support_card_title'),
-                    subtitle: l.t('admin_user_support_card_subtitle'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdminUserSupportScreen(
-                          viewer: widget.user,
+              child: Builder(
+                builder: (context) {
+                  final perms = user.effectivePermissions;
+                  final cards = <Widget>[];
+                  if (user.isSuperAdmin || perms.canSeeManageUsers) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.group,
+                        title: l.t('admin_manage_users'),
+                        subtitle: l.t('admin_manage_users_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ManageUsersScreen(viewer: widget.user),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  _AdminCard(
-                    icon: Icons.pie_chart,
-                    title: l.t('admin_analytics_title'),
-                    subtitle: l.t('admin_analytics_subtitle'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdminAnalyticsChartsScreen(),
+                    );
+                  }
+                  if (perms.canSeeUserSupport) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.support_agent,
+                        title: l.t('admin_user_support_card_title'),
+                        subtitle: l.t('admin_user_support_card_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AdminUserSupportScreen(
+                              viewer: widget.user,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  _AdminCard(
-                    icon: Icons.feedback,
-                    title: l.t('admin_check_feedback'),
-                    subtitle: l.t('admin_check_feedback_subtitle'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const AdminFeedbackScreen(),
+                    );
+                  }
+                  if (perms.analytics) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.pie_chart,
+                        title: l.t('admin_analytics_title'),
+                        subtitle: l.t('admin_analytics_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AdminAnalyticsChartsScreen(
+                              viewer: widget.user,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  _AdminCard(
-                    icon: Icons.emoji_events,
-                    title: l.t('admin_check_leaderboard'),
-                    subtitle: l.t('admin_check_leaderboard_subtitle'),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const LeaderboardScreen(),
+                    );
+                  }
+                  if (perms.canSeeFeedback) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.feedback,
+                        title: l.t('admin_check_feedback'),
+                        subtitle: l.t('admin_check_feedback_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AdminFeedbackScreen(
+                              viewer: widget.user,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                  if (perms.leaderboard) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.emoji_events,
+                        title: l.t('admin_check_leaderboard'),
+                        subtitle: l.t('admin_check_leaderboard_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const LeaderboardScreen(),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  if (perms.canSeeManageQuiz) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.quiz,
+                        title: l.t('manage_quiz_card_title'),
+                        subtitle: l.t('manage_quiz_card_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => EditQuizScreen(viewer: widget.user),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  if (cards.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          l.t('admin_no_pages_access'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey[700],
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  return GridView.count(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.88,
+                    children: cards,
+                  );
+                },
               ),
             ),
           ],

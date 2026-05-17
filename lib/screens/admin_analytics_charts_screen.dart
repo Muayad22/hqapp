@@ -7,7 +7,9 @@ import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
 
 class AdminAnalyticsChartsScreen extends StatelessWidget {
-  const AdminAnalyticsChartsScreen({super.key});
+  final UserProfile viewer;
+
+  const AdminAnalyticsChartsScreen({super.key, required this.viewer});
 
   @override
   Widget build(BuildContext context) {

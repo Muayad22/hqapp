@@ -78,7 +78,7 @@ class AdminUserSupportScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final canEnable = viewer.isSuperAdmin;
+    final canEnable = viewer.effectivePermissions.canEnableFromUserSupport;
 
     return Scaffold(
       appBar: AppBar(

@@ -994,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => AiChatbot(),
+                                builder: (_) => AiChatbot(user: _user),
                               ),
                             );
                           },
