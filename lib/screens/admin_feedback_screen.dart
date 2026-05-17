@@ -1,20 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/models/feedback_entry.dart';
+import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/widgets/feedback_star_rating.dart';
 
 class AdminFeedbackScreen extends StatefulWidget {
-  const AdminFeedbackScreen({super.key});
+  final UserProfile viewer;
+
+  const AdminFeedbackScreen({super.key, required this.viewer});
 
   @override
   State<AdminFeedbackScreen> createState() => _AdminFeedbackScreenState();
 }
 
 class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
+  Future<void> _deleteFeedback(FeedbackEntry feedback) async {
+    final l = AppLocalizations.of(context);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l.t('admin_feedback_delete_q')),
+        content: Text(l.t('admin_feedback_delete_msg')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(l.t('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text(l.t('admin_feedback_delete_btn')),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    try {
+      await FirestoreService.deleteFeedback(feedback.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l.t('admin_feedback_deleted'))),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final canDelete = widget.viewer.effectivePermissions.canDeleteFeedback;
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -183,6 +225,15 @@ class _AdminFeedbackScreenState extends State<AdminFeedbackScreen> {
                               ],
                             ),
                           ),
+                          if (canDelete)
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                color: Colors.red.shade700,
+                              ),
+                              tooltip: l.t('admin_feedback_delete_btn'),
+                              onPressed: () => _deleteFeedback(feedback),
+                            ),
                         ],
                       ),
                       const SizedBox(height: 12),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/screens/login_screen.dart';
+import 'package:hqapp/models/quiz_question_entry.dart';
 import 'package:hqapp/services/firestore_service.dart';
 import 'package:hqapp/services/quiz_service.dart';
 import 'package:hqapp/utils/animations.dart';
@@ -17,7 +18,10 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
-  late List<QuizQuestion> questions;
+  List<QuizQuestion> questions = [];
+  String? _categoryKey;
+  bool _loadingQuestions = false;
+  String? _loadError;
   int currentQuestionIndex = 0;
   int score = 0;
   int? selectedAnswer;
@@ -37,7 +41,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    questions = QuizService.getRandomQuestions(5);
 
     // Initialize animation controllers
     _progressController = AnimationController(
@@ -75,9 +78,6 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         curve: AppAnimations.defaultCurve,
       ),
     );
-
-    _questionController.forward();
-    _updateProgress();
   }
 
   @override
@@ -92,6 +92,170 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   void _updateProgress() {
     _progressController.value = 0;
     _progressController.forward();
+  }
+
+  Future<void> _startCategory(String category) async {
+    final l = AppLocalizations.of(context);
+    setState(() {
+      _loadingQuestions = true;
+      _loadError = null;
+      _categoryKey = category;
+      isQuizComplete = false;
+      _resultSaved = false;
+    });
+    try {
+      final loaded = await QuizService.loadQuestions(category, count: 5);
+      if (!mounted) return;
+      if (loaded.isEmpty) {
+        setState(() {
+          _loadingQuestions = false;
+          _categoryKey = null;
+          _loadError = l.t('quiz_no_questions');
+        });
+        return;
+      }
+      if (!mounted) return;
+      _progressController.reset();
+      _questionController.reset();
+      _confettiController.reset();
+      _buttonController.reset();
+      setState(() {
+        questions = loaded;
+        _loadingQuestions = false;
+        currentQuestionIndex = 0;
+        score = 0;
+        selectedAnswer = null;
+        showResult = false;
+      });
+      _questionController.forward();
+      _updateProgress();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingQuestions = false;
+        _categoryKey = null;
+        _loadError = e.toString();
+      });
+    }
+  }
+
+  void _backToCategories() {
+    _progressController.reset();
+    _questionController.reset();
+    setState(() {
+      _categoryKey = null;
+      questions = [];
+      currentQuestionIndex = 0;
+      score = 0;
+      selectedAnswer = null;
+      showResult = false;
+      isQuizComplete = false;
+      _resultSaved = false;
+      _loadError = null;
+    });
+  }
+
+  Widget _buildCategoryPicker() {
+    final l = AppLocalizations.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            l.t('quiz_choose_category'),
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B4423),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            l.t('quiz_choose_category_sub'),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          if (_loadError != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              _loadError!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red.shade700),
+            ),
+          ],
+          const SizedBox(height: 32),
+          _categoryCard(
+            icon: Icons.castle,
+            title: l.t('quiz_category_general'),
+            subtitle: l.t('quiz_category_general_sub'),
+            onTap: () => _startCategory(QuizCategories.general),
+          ),
+          const SizedBox(height: 16),
+          _categoryCard(
+            icon: Icons.meeting_room,
+            title: l.t('quiz_category_imam'),
+            subtitle: l.t('quiz_category_imam_sub'),
+            onTap: () => _startCategory(QuizCategories.imamRoom),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _categoryCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      elevation: 3,
+      child: InkWell(
+        onTap: _loadingQuestions ? null : onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6B4423).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: const Color(0xFF6B4423), size: 32),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6B4423),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios, color: Color(0xFF6B4423)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _selectAnswer(int answerIndex) {
@@ -287,26 +451,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
   }
 
   void _restartQuiz() {
-    // Reset animation controllers
-    _progressController.reset();
-    _questionController.reset();
-    _confettiController.reset();
-    _buttonController.reset();
-
-    setState(() {
-      currentQuestionIndex = 0;
-      score = 0;
-      selectedAnswer = null;
-      showResult = false;
-      isQuizComplete = false;
-      _resultSaved = false;
-    });
-
-    questions = QuizService.getRandomQuestions(5);
-
-    // Restart animations
-    _questionController.forward();
-    _updateProgress();
+    final cat = _categoryKey;
+    if (cat == null) {
+      _backToCategories();
+      return;
+    }
+    _startCategory(cat);
   }
 
   @override
@@ -372,6 +522,12 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
+        leading: _categoryKey != null && !isQuizComplete
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _backToCategories,
+              )
+            : null,
         title: Text(
           l.t('quiz_title'),
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
@@ -381,7 +537,13 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
         elevation: 2,
         centerTitle: true,
       ),
-      body: isQuizComplete ? _buildQuizComplete() : _buildQuizContent(),
+      body: isQuizComplete
+          ? _buildQuizComplete()
+          : _loadingQuestions
+          ? const Center(child: CircularProgressIndicator())
+          : _categoryKey == null
+          ? _buildCategoryPicker()
+          : _buildQuizContent(),
     );
   }
 
@@ -593,78 +755,58 @@ class _QuizScreenState extends State<QuizScreen> with TickerProviderStateMixin {
                           ),
                         );
                       }),
-                      const SizedBox(height: 20),
-                      // Explanation with Animation
-                      if (showResult)
-                        TweenAnimationBuilder<double>(
-                          duration: AppAnimations.mediumDuration,
-                          tween: Tween(begin: 0.0, end: 1.0),
-                          curve: AppAnimations.defaultCurve,
-                          builder: (context, value, child) {
-                            return Transform.scale(
-                              scale: value,
-                              child: Opacity(
-                                opacity: value,
-                                child: Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        const Color(
-                                          0xFFB8860B,
-                                        ).withOpacity(0.1),
-                                        const Color(
-                                          0xFFB8860B,
-                                        ).withOpacity(0.05),
-                                      ],
-                                    ),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: const Color(
-                                        0xFFB8860B,
-                                      ).withOpacity(0.3),
-                                      width: 2,
+                      if (showResult && question.hasExplanation) ...[
+                        const SizedBox(height: 20),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFFB8860B).withOpacity(0.1),
+                                const Color(0xFFB8860B).withOpacity(0.05),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: const Color(0xFFB8860B).withOpacity(0.3),
+                              width: 2,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.lightbulb,
+                                    color: Color(0xFFB8860B),
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    l.t('quiz_explanation'),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Color(0xFFB8860B),
                                     ),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.lightbulb,
-                                            color: const Color(0xFFB8860B),
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            l.t('quiz_explanation'),
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: const Color(0xFFB8860B),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Text(
-                                        question.explanationFor(lang),
-                                        style: TextStyle(
-                                          color: const Color(0xFF6B4423),
-                                          fontSize: 15,
-                                          height: 1.5,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                question.explanationFor(lang),
+                                style: const TextStyle(
+                                  color: Color(0xFF6B4423),
+                                  fontSize: 15,
+                                  height: 1.5,
                                 ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
                         ),
+                      ],
                     ],
                   ),
                 ),
