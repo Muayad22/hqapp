@@ -6,7 +6,7 @@ Future<String> getOpenRouterResponse(String userInput) async{
   const endpoint =  'https://openrouter.ai/api/v1/chat/completions';
 
   final headers = {
-    'Authorization': 'Bearer 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',
+    'Authorization': 'Bearer',
     'Content-Type': 'application/json',
   };
 
@@ -36,4 +36,3 @@ Future<String> getOpenRouterResponse(String userInput) async{
 
 }
 
-//comment
