@@ -115,10 +115,10 @@ class _AiChatbotState extends State<AiChatbot> {
                   child: messages.isEmpty
                       ? Center(
                           child: Text(
-                            l.t('Type in your message...'),
+                            l.t('start_conversation'),
                             style: TextStyle(
                               color: Colors.grey.shade600,
-                              fontSize: 16,
+                              fontSize: 18,
                             ),
                           ),
                         )
@@ -229,7 +229,7 @@ class _AiChatbotState extends State<AiChatbot> {
         decoration: InputDecoration(
           border: InputBorder.none,
           contentPadding: const EdgeInsets.all(18),
-          hintText: l.t('Type in your message...'),
+          hintText: l.t('type_message'),
         ),
         onSubmitted: _sendUserMessage,
       ),

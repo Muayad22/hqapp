@@ -533,6 +533,8 @@ class AppLocalizations {
       'audio_player':'Audio Player',
       //AI Chatbot
       'ai_chatbot':'AI Chatbot',
+      'start_conversation':'Start a conversation!',
+      'type_message':'Type in your messaage...',
 
     },
     'ar': {
@@ -993,6 +995,8 @@ class AppLocalizations {
       'audio_player':'مشغل الصوت',
       //AI chatbot
       'ai_chatbot':' مساعد الذكاء الاصطناعي',
+      'start_conversation':'!ابدأ محادثة',
+      'type_message':' ...اكتب رسالتك',
 
     },
   };
