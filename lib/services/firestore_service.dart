@@ -14,6 +14,7 @@ import 'package:hqapp/models/feedback_entry.dart';
 import 'package:hqapp/services/achievement_helpers.dart';
 import 'package:hqapp/models/leaderboard_entry.dart';
 import 'package:hqapp/models/notification_entry.dart';
+import 'package:hqapp/models/media_entry.dart';
 import 'package:hqapp/models/quiz_question_entry.dart';
 import 'package:hqapp/models/quiz_result.dart';
 import 'package:hqapp/models/user_profile.dart';
@@ -99,6 +100,7 @@ class FirestoreService {
   /// `.read` to list appeals in the admin app.
   static const _disabledAccountAppealsPath = 'disabledAccountAppeals';
   static const _quizContentPath = 'quizContent';
+  static const _mediaContentPath = 'mediaContent';
   static const _aiChatMessagesPath = 'aiChatMessages';
 
   static String _hashPassword(String value) {
@@ -1941,5 +1943,49 @@ class FirestoreService {
         .child('questions')
         .child(questionId)
         .remove();
+  }
+
+  static DatabaseReference get _mediaContentRef => _db.child(_mediaContentPath);
+
+  static Stream<List<MediaEntry>> mediaItemsStream() {
+    return _mediaContentRef.onValue.map((event) {
+      if (!event.snapshot.exists) return <MediaEntry>[];
+      final data = event.snapshot.value;
+      if (data is! Map) return <MediaEntry>[];
+      final list = <MediaEntry>[];
+      for (final entry in data.entries) {
+        final raw = entry.value;
+        if (raw is! Map) continue;
+        list.add(
+          MediaEntry.fromMap(
+            key: entry.key.toString(),
+            data: Map<String, dynamic>.from(
+              raw.map((k, v) => MapEntry(k.toString(), v)),
+            ),
+          ),
+        );
+      }
+      list.sort((a, b) => a.name.compareTo(b.name));
+      return list;
+    });
+  }
+
+  static Future<String> addMediaItem({required MediaEntry entry}) async {
+    final ref = _mediaContentRef.push();
+    final id = ref.key!;
+    await ref.set({
+      'id': id,
+      'name': entry.name,
+      'url': entry.url,
+    });
+    return id;
+  }
+
+  static Future<void> updateMediaItem({required MediaEntry entry}) async {
+    await _mediaContentRef.child(entry.id).update(entry.toMap());
+  }
+
+  static Future<void> deleteMediaItem({required String mediaId}) async {
+    await _mediaContentRef.child(mediaId).remove();
   }
 }

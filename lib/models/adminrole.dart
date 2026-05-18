@@ -59,6 +59,38 @@ enum AdminUserSupportAccess {
   }
 }
 
+/// Manage media items: hidden, view list only, or add/edit/delete.
+enum AdminMediaAccess {
+  hidden,
+  view,
+  manage;
+
+  static AdminMediaAccess fromDb(Object? raw) {
+    final s = raw?.toString().trim().toLowerCase() ?? '';
+    switch (s) {
+      case 'view':
+      case 'read':
+        return AdminMediaAccess.view;
+      case 'manage':
+      case 'delete':
+        return AdminMediaAccess.manage;
+      default:
+        return AdminMediaAccess.hidden;
+    }
+  }
+
+  String toDb() {
+    switch (this) {
+      case AdminMediaAccess.hidden:
+        return 'hidden';
+      case AdminMediaAccess.view:
+        return 'view';
+      case AdminMediaAccess.manage:
+        return 'manage';
+    }
+  }
+}
+
 /// Manage quiz questions: hidden, view list only, or add/edit/delete.
 enum AdminQuizAccess {
   hidden,
@@ -118,6 +150,7 @@ class AdminPermissions {
   final bool analytics;
   final AdminManageUsersAccess manageUsers;
   final AdminQuizAccess manageQuiz;
+  final AdminMediaAccess manageMedia;
 
   const AdminPermissions({
     this.feedback = AdminFeedbackAccess.hidden,
@@ -126,6 +159,7 @@ class AdminPermissions {
     this.analytics = false,
     this.manageUsers = AdminManageUsersAccess.hidden,
     this.manageQuiz = AdminQuizAccess.hidden,
+    this.manageMedia = AdminMediaAccess.hidden,
   });
 
   static const AdminPermissions all = AdminPermissions(
@@ -135,6 +169,7 @@ class AdminPermissions {
     analytics: true,
     manageUsers: AdminManageUsersAccess.view,
     manageQuiz: AdminQuizAccess.manage,
+    manageMedia: AdminMediaAccess.manage,
   );
 
   static const AdminPermissions none = AdminPermissions();
@@ -156,6 +191,8 @@ class AdminPermissions {
   bool get canSeeManageUsers => manageUsers != AdminManageUsersAccess.hidden;
   bool get canSeeManageQuiz => manageQuiz != AdminQuizAccess.hidden;
   bool get canManageQuiz => manageQuiz == AdminQuizAccess.manage;
+  bool get canSeeManageMedia => manageMedia != AdminMediaAccess.hidden;
+  bool get canManageMedia => manageMedia == AdminMediaAccess.manage;
 
   bool get hasAnyAdminPageAccess =>
       canSeeFeedback ||
@@ -163,7 +200,8 @@ class AdminPermissions {
       canSeeUserSupport ||
       analytics ||
       canSeeManageUsers ||
-      canSeeManageQuiz;
+      canSeeManageQuiz ||
+      canSeeManageMedia;
 
   factory AdminPermissions.fromMap(Map<String, dynamic>? data) {
     if (data == null || data.isEmpty) return AdminPermissions.none;
@@ -174,6 +212,7 @@ class AdminPermissions {
       analytics: _parseBool(data['analytics']),
       manageUsers: AdminManageUsersAccess.fromDb(data['manageUsers']),
       manageQuiz: AdminQuizAccess.fromDb(data['manageQuiz']),
+      manageMedia: AdminMediaAccess.fromDb(data['manageMedia']),
     );
   }
 
@@ -184,6 +223,7 @@ class AdminPermissions {
     'analytics': analytics,
     'manageUsers': manageUsers.toDb(),
     'manageQuiz': manageQuiz.toDb(),
+    'manageMedia': manageMedia.toDb(),
   };
 
   AdminPermissions copyWith({
@@ -193,6 +233,7 @@ class AdminPermissions {
     bool? analytics,
     AdminManageUsersAccess? manageUsers,
     AdminQuizAccess? manageQuiz,
+    AdminMediaAccess? manageMedia,
   }) {
     return AdminPermissions(
       feedback: feedback ?? this.feedback,
@@ -201,6 +242,7 @@ class AdminPermissions {
       analytics: analytics ?? this.analytics,
       manageUsers: manageUsers ?? this.manageUsers,
       manageQuiz: manageQuiz ?? this.manageQuiz,
+      manageMedia: manageMedia ?? this.manageMedia,
     );
   }
 

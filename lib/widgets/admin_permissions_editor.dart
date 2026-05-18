@@ -44,6 +44,7 @@ class _AdminPermissionsEditorState extends State<AdminPermissionsEditor> {
   late bool _analytics;
   late AdminManageUsersAccess _manageUsers;
   late AdminQuizAccess _manageQuiz;
+  late AdminMediaAccess _manageMedia;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _AdminPermissionsEditorState extends State<AdminPermissionsEditor> {
     _analytics = widget.initial.analytics;
     _manageUsers = widget.initial.manageUsers;
     _manageQuiz = widget.initial.manageQuiz;
+    _manageMedia = widget.initial.manageMedia;
   }
 
   AdminPermissions get _draft => AdminPermissions(
@@ -63,6 +65,7 @@ class _AdminPermissionsEditorState extends State<AdminPermissionsEditor> {
     analytics: _analytics,
     manageUsers: _manageUsers,
     manageQuiz: _manageQuiz,
+    manageMedia: _manageMedia,
   );
 
   @override
@@ -124,6 +127,9 @@ class _AdminPermissionsEditorState extends State<AdminPermissionsEditor> {
             const SizedBox(height: 16),
             _sectionTitle(l.t('admin_perm_manage_quiz')),
             _manageQuizSelector(l),
+            const SizedBox(height: 16),
+            _sectionTitle(l.t('admin_perm_manage_media')),
+            _manageMediaSelector(l),
             const SizedBox(height: 24),
             Row(
               children: [
@@ -253,6 +259,27 @@ class _AdminPermissionsEditorState extends State<AdminPermissionsEditor> {
       ],
       selected: {_manageQuiz},
       onSelectionChanged: (s) => setState(() => _manageQuiz = s.first),
+    );
+  }
+
+  Widget _manageMediaSelector(AppLocalizations l) {
+    return SegmentedButton<AdminMediaAccess>(
+      segments: [
+        ButtonSegment(
+          value: AdminMediaAccess.hidden,
+          label: Text(l.t('admin_perm_hidden'), style: _segStyle),
+        ),
+        ButtonSegment(
+          value: AdminMediaAccess.view,
+          label: Text(l.t('admin_perm_view_only'), style: _segStyle),
+        ),
+        ButtonSegment(
+          value: AdminMediaAccess.manage,
+          label: Text(l.t('admin_perm_can_manage_media'), style: _segStyle),
+        ),
+      ],
+      selected: {_manageMedia},
+      onSelectionChanged: (s) => setState(() => _manageMedia = s.first),
     );
   }
 

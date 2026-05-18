@@ -6,6 +6,7 @@ import 'package:hqapp/screens/admin_analytics_charts_screen.dart';
 import 'package:hqapp/screens/leaderboard_screen.dart';
 import 'package:hqapp/screens/login_screen.dart';
 import 'package:hqapp/screens/edit_quiz.dart';
+import 'package:hqapp/screens/manage_media_screen.dart';
 import 'package:hqapp/screens/manage_users_screen.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/services/session_service.dart';
@@ -338,6 +339,22 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => EditQuizScreen(viewer: widget.user),
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                  if (perms.canSeeManageMedia) {
+                    cards.add(
+                      _AdminCard(
+                        icon: Icons.perm_media,
+                        title: l.t('manage_media_card_title'),
+                        subtitle: l.t('manage_media_card_subtitle'),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ManageMediaScreen(viewer: widget.user),
                           ),
                         ),
                       ),
