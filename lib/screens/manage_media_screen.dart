@@ -3,6 +3,7 @@ import 'package:hqapp/localization/app_localizations.dart';
 import 'package:hqapp/models/media_entry.dart';
 import 'package:hqapp/models/user_profile.dart';
 import 'package:hqapp/services/firestore_service.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 /// Admin: view or manage media items (name + URL).
 class ManageMediaScreen extends StatefulWidget {
@@ -40,9 +41,9 @@ class _ManageMediaScreenState extends State<ManageMediaScreen> {
         await FirestoreService.updateMediaItem(entry: result);
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.t('manage_media_saved'))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l.t('manage_media_saved'))));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -74,6 +75,67 @@ class _ManageMediaScreenState extends State<ManageMediaScreen> {
     );
     if (ok != true) return;
     await FirestoreService.deleteMediaItem(mediaId: item.id);
+  }
+
+  void _showMediaQr(MediaEntry item) {
+    if (item.id.isEmpty) return;
+    final l = AppLocalizations.of(context);
+    const qrSize = 220.0;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.name,
+                style: Theme.of(ctx).textTheme.titleLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: qrSize,
+                height: qrSize,
+                child: QrImageView(
+                  data: item.id,
+                  version: QrVersions.auto,
+                  size: qrSize,
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l.t('manage_media_qr_hint'),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey[700], fontSize: 13),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l.t('manage_media_qr_id'),
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              SelectableText(
+                item.id,
+                style: const TextStyle(fontSize: 11),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: Text(l.t('cancel')),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -139,25 +201,32 @@ class _ManageMediaScreenState extends State<ManageMediaScreen> {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        trailing: _canManage
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () =>
-                                        _openMediaForm(existing: item),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.delete_outline,
-                                      color: Colors.red.shade700,
-                                    ),
-                                    onPressed: () => _deleteMedia(item),
-                                  ),
-                                ],
-                              )
-                            : null,
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.qr_code),
+                              tooltip: l.t('manage_media_qr_hint'),
+                              onPressed: item.id.isEmpty
+                                  ? null
+                                  : () => _showMediaQr(item),
+                            ),
+                            if (_canManage) ...[
+                              IconButton(
+                                icon: const Icon(Icons.edit),
+                                onPressed: () =>
+                                    _openMediaForm(existing: item),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.delete_outline,
+                                  color: Colors.red.shade700,
+                                ),
+                                onPressed: () => _deleteMedia(item),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                     );
                   },
@@ -234,9 +303,7 @@ class _MediaFormDialogState extends State<_MediaFormDialog> {
               TextField(
                 controller: _url,
                 keyboardType: TextInputType.url,
-                decoration: InputDecoration(
-                  labelText: l.t('manage_media_url'),
-                ),
+                decoration: InputDecoration(labelText: l.t('manage_media_url')),
               ),
             ],
           ),

@@ -1,14 +1,9 @@
-
 class MediaEntry {
   final String id;
   final String name;
   final String url;
 
-  const MediaEntry({
-    required this.id,
-    required this.name,
-    required this.url,
-  });
+  const MediaEntry({required this.id, required this.name, required this.url});
 
   factory MediaEntry.fromMap({
     required String key,
@@ -21,9 +16,5 @@ class MediaEntry {
     );
   }
 
-  Map<String, dynamic> toMap() => {
-    'id': id,
-    'name': name,
-    'url': url,
-  };
+  Map<String, dynamic> toMap() => {'id': id, 'name': name, 'url': url};
 }

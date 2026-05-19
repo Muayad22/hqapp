@@ -6,7 +6,7 @@ class AppLocalizations {
   final String languageCode;
 
   static String _currentLanguageCode = 'en';
-// save the currentLanguageCode to know what language is currently selected
+  // save the currentLanguageCode to know what language is currently selected
   static String get currentLanguageCode => _currentLanguageCode;
 
   static void setLanguage(String code) {
@@ -19,14 +19,12 @@ class AppLocalizations {
     return AppLocalizations(_currentLanguageCode);
   }
 
-  
   // translator for error messages.
   static String localizeError(BuildContext context, String rawMessage) {
     final l = AppLocalizations.of(context);
-    final msg = rawMessage.trim();  // removes extra spaces.
+    final msg = rawMessage.trim(); // removes extra spaces.
     final lower = msg.toLowerCase();
 
-    
     if (lower.contains('the email is not registered')) {
       return l.t('auth_email_not_registered');
     }
@@ -112,8 +110,7 @@ class AppLocalizations {
       'admin_user_support_empty': 'No messages yet.',
       'admin_user_support_message_label': 'User message',
       'admin_user_support_enable_account': 'Enable account',
-      'admin_user_support_enable_confirm':
-          'Allow {name} to sign in again?',
+      'admin_user_support_enable_confirm': 'Allow {name} to sign in again?',
       'or_continue_as': 'or continue as',
       'continue_as_guest': 'Continue as Guest',
       'no_account': "Don't have an account? ",
@@ -123,10 +120,10 @@ class AppLocalizations {
       'scan_explore_earn': 'Scan, Explore, Earn',
       'mobile': 'Mobile',
       'edit_account': 'Edit Account',
-      'tutorial':'Tutorial',
-      'skip':'Skip',
-      'next':'Next',
-      'finish':'Finish',
+      'tutorial': 'Tutorial',
+      'skip': 'Skip',
+      'next': 'Next',
+      'finish': 'Finish',
       'feedback': 'Feedback',
       'feedback_title': 'Feedback',
       'feedback_prompt': 'Share your suggestions to improve the experience.',
@@ -137,7 +134,8 @@ class AppLocalizations {
       'feedback_submitted': 'Feedback submitted. Thank you!',
       'feedback_submit_failed': 'Unable to submit feedback right now.',
       'feedback_rating_label': 'Your rating',
-      'feedback_rating_required': 'Please tap the stars to rate your experience.',
+      'feedback_rating_required':
+          'Please tap the stars to rate your experience.',
       'logout': 'Logout',
       'save': 'Save',
       'cancel': 'Cancel',
@@ -242,8 +240,7 @@ class AppLocalizations {
           'Keep playing quizzes to unlock more achievements and improve your ranking!',
       'notifications_title': 'Notifications',
       'notifications_login_required': 'Login Required',
-      'notifications_login_message':
-          'You need to login to view notifications!',
+      'notifications_login_message': 'You need to login to view notifications!',
       'notifications_mark_all_read': 'Mark all read',
       'notifications_empty_title': 'No Notifications',
       'notifications_empty_message':
@@ -299,8 +296,10 @@ class AppLocalizations {
       'manage_quiz_question_ar': 'Question (Arabic)',
       'manage_quiz_option_en': 'Option {n} (English)',
       'manage_quiz_option_ar': 'Option {n} (Arabic)',
-      'manage_quiz_explanation_en': 'Explanation (English) — why this answer is correct',
-      'manage_quiz_explanation_ar': 'Explanation (Arabic) — why this answer is correct',
+      'manage_quiz_explanation_en':
+          'Explanation (English) — why this answer is correct',
+      'manage_quiz_explanation_ar':
+          'Explanation (Arabic) — why this answer is correct',
       'manage_quiz_saved': 'Saved',
       'manage_quiz_empty': 'No questions yet. Tap + to add one.',
       'manage_quiz_view_only_hint':
@@ -328,6 +327,8 @@ class AppLocalizations {
       'manage_media_fill_required': 'Please fill in media name and URL.',
       'manage_media_delete_q': 'Delete this media?',
       'manage_media_delete_msg': 'This cannot be undone.',
+      'manage_media_qr_hint': 'Scan in the app to play this media.',
+      'manage_media_qr_id': 'Media ID',
       'admin_perm_manage_media': 'Manage media',
       'admin_perm_can_manage_media': 'Add & delete',
       'quiz_score_label': 'Score: {value}',
@@ -336,8 +337,7 @@ class AppLocalizations {
           'Excellent! You are a Nizwa Castle expert! 🏆',
       'quiz_score_message_very_good':
           'Very Good! You have good knowledge about Nizwa Castle! 👍',
-      'quiz_score_message_ok':
-          'Not bad! Learn more about Nizwa Castle! 📚',
+      'quiz_score_message_ok': 'Not bad! Learn more about Nizwa Castle! 📚',
       'quiz_score_message_try_again':
           "Try again! Discover more about Oman's heritage! 🏰",
       // Register / create account
@@ -345,14 +345,11 @@ class AppLocalizations {
       'register_subtitle': 'Join the heritage exploration journey',
       'register_username_label': 'Username / Display Name',
       'register_username_required': 'Please enter your username',
-      'register_username_min':
-          'Username must be at least 3 characters',
+      'register_username_min': 'Username must be at least 3 characters',
       'register_mobile_label': 'Mobile Number',
       'register_mobile_required': 'Mobile number cannot be empty.',
-      'register_mobile_digits':
-          'Mobile number must contain only numbers.',
-      'register_mobile_length':
-          'Mobile number must be exactly 8 digits',
+      'register_mobile_digits': 'Mobile number must contain only numbers.',
+      'register_mobile_length': 'Mobile number must be exactly 8 digits',
       'register_email_label': 'Email',
       'register_email_required': 'Email cannot be empty.',
       'register_email_invalid':
@@ -362,10 +359,8 @@ class AppLocalizations {
       'register_visitor_foreign': 'Foreign Visitor',
       'register_password_label': 'Password',
       'register_password_required': 'Password cannot be empty.',
-      'register_password_min':
-          'Password must be at least 8 characters.',
-      'register_password_pattern':
-          'Password must contain letters and numbers.',
+      'register_password_min': 'Password must be at least 8 characters.',
+      'register_password_pattern': 'Password must contain letters and numbers.',
       'register_confirm_password_label': 'Confirm Password',
       'register_confirm_password_required': 'Cannot be empty',
       'register_confirm_password_mismatch': 'Passwords do not match',
@@ -373,8 +368,7 @@ class AppLocalizations {
       'register_button_create': 'Create Account',
       'register_have_account': 'Already have an account? ',
       'register_login': 'Login',
-      'register_generic_error':
-          'An error occurred. Please try again.',
+      'register_generic_error': 'An error occurred. Please try again.',
       // Map / QR
       'map_title': 'Map',
       'map_find_location_button': 'Find your current location',
@@ -382,12 +376,12 @@ class AppLocalizations {
       'qr_title': 'QR Scanner',
       'qr_scan_again': 'Scan Again',
       'qr_location_title': 'Your Location',
-      'default':'Default',
-      '35-38_student_rooms':'35-38 students rooms',
-      '40-41_sitting_area':'40-41 Sitting area',
-      '44-46_kitchen':'44-46 Kitchen',
-      '56_imam_room':'56 Imam\'s room',
-      '58_walis_barza':'58 Walis barza',
+      'default': 'Default',
+      '35-38_student_rooms': '35-38 students rooms',
+      '40-41_sitting_area': '40-41 Sitting area',
+      '44-46_kitchen': '44-46 Kitchen',
+      '56_imam_room': '56 Imam\'s room',
+      '58_walis_barza': '58 Walis barza',
       'qr_location_image_not_found': 'Location image not found',
       'qr_no_location_image': 'No location image found',
       // Admin
@@ -457,8 +451,7 @@ class AppLocalizations {
       'admin_no_pages_access':
           'You do not have access to any admin pages. Contact a super admin.',
       'admin_feedback_delete_q': 'Delete feedback?',
-      'admin_feedback_delete_msg':
-          'This feedback will be removed permanently.',
+      'admin_feedback_delete_msg': 'This feedback will be removed permanently.',
       'admin_feedback_delete_btn': 'Delete',
       'admin_feedback_deleted': 'Feedback deleted',
       // Admin analytics (charts)
@@ -545,13 +538,12 @@ class AppLocalizations {
       'forgot_password_failed_reset':
           'Failed to reset password. Please try again.',
       //Media player
-      'video_player':'Video Player',
-      'audio_player':'Audio Player',
+      'video_player': 'Video Player',
+      'audio_player': 'Audio Player',
       //AI Chatbot
-      'ai_chatbot':'AI Chatbot',
-      'start_conversation':'Start a conversation!',
-      'type_message':'Type in your messaage...',
-
+      'ai_chatbot': 'AI Chatbot',
+      'start_conversation': 'Start a conversation!',
+      'type_message': 'Type in your messaage...',
     },
     'ar': {
       'app_title': 'Heritage Quest', //  title
@@ -575,13 +567,11 @@ class AppLocalizations {
       'login_disabled_appeal_field_hint': 'اشرح سبب طلب إعادة تفعيل حسابك…',
       'login_disabled_appeal_submit': 'إرسال للمشرفين',
       'login_disabled_appeal_submitting': 'جاري الإرسال…',
-      'login_disabled_appeal_sent':
-          'تم إرسال رسالتك. سيقوم المشرف بمراجعتها.',
+      'login_disabled_appeal_sent': 'تم إرسال رسالتك. سيقوم المشرف بمراجعتها.',
       'login_disabled_appeal_empty': 'يرجى كتابة رسالة قبل الإرسال.',
       'auth_appeal_account_not_disabled':
           'هذا الحساب غير معطّل. يمكنك تسجيل الدخول بشكل طبيعي.',
-      'auth_appeal_message_required':
-          'يرجى إدخال رسالة للمشرف.',
+      'auth_appeal_message_required': 'يرجى إدخال رسالة للمشرف.',
       'auth_appeal_message_too_long':
           'الرسالة طويلة جداً. الحد الأقصى 2000 حرف.',
       'admin_user_support_title': 'دعم الحسابات المعطّلة',
@@ -603,9 +593,9 @@ class AppLocalizations {
       'mobile': 'الجوال',
       'edit_account': 'تعديل الحساب',
       'tutorial': 'درس تعليمي',
-      'skip':'تخطي',
-      'next':'التالي',
-      'finish':'إنتهاء',
+      'skip': 'تخطي',
+      'next': 'التالي',
+      'finish': 'إنتهاء',
       'feedback': 'ملاحظات',
       'feedback_title': 'الملاحظات',
       'feedback_prompt': 'شارك اقتراحاتك لتحسين التجربة.',
@@ -629,7 +619,7 @@ class AppLocalizations {
       'confirm_new_password': 'تأكيد كلمة المرور الجديدة',
       'password_changed_success': 'تم تغيير كلمة المرور بنجاح',
       'change_password_error': 'حدث خطأ أثناء تغيير كلمة المرور: {error}',
-      'password_requirements_min6':'يجب ألا تقل كلمة المرور عن 8 أحرف',
+      'password_requirements_min6': 'يجب ألا تقل كلمة المرور عن 8 أحرف',
       'password_requirements_letter':
           'يجب أن تحتوي كلمة المرور على حرف واحد على الأقل',
       'password_requirements_number':
@@ -645,8 +635,7 @@ class AppLocalizations {
           'لقد حصلت على {score} من {total}. {suffix}',
       'quiz_completed_suffix_perfect': 'نتيجة كاملة!',
       'quiz_completed_suffix_great': 'عمل رائع!',
-      'achievement_unlocked_first_quiz_title':
-          '🎯 تم فتح إنجاز: أول اختبار!',
+      'achievement_unlocked_first_quiz_title': '🎯 تم فتح إنجاز: أول اختبار!',
       'achievement_unlocked_first_quiz_message':
           'لقد أكملت أول اختبار لك! استمر في الاستكشاف لفتح المزيد من الإنجازات.',
       'achievement_unlocked_perfect_score_title':
@@ -661,12 +650,10 @@ class AppLocalizations {
           '⭐ تم فتح إنجاز: انتصار مثالي!',
       'achievement_unlocked_flawless_victory_message':
           'رائع! لقد حققت نتيجة كاملة في اختبار من 3 أسئلة فأكثر!',
-      'achievement_unlocked_first_scan_title':
-          '📷 تم فتح إنجاز: أول مسح!',
+      'achievement_unlocked_first_scan_title': '📷 تم فتح إنجاز: أول مسح!',
       'achievement_unlocked_first_scan_message':
           'لقد فتحت أول موقع تراثي من رمز QR. واصل المسح!',
-      'achievement_unlocked_keen_scanner_title':
-          '🧭 تم فتح إنجاز: مساح نشيط!',
+      'achievement_unlocked_keen_scanner_title': '🧭 تم فتح إنجاز: مساح نشيط!',
       'achievement_unlocked_keen_scanner_message':
           'لقد فتحت 5 مواقع تراثية بالمسح. استكشاف رائع!',
       // Achievements details (titles/descriptions)
@@ -720,12 +707,10 @@ class AppLocalizations {
           'استمر في لعب الاختبارات لفتح مزيد من الإنجازات وتحسين ترتيبك!',
       'notifications_title': 'الإشعارات',
       'notifications_login_required': 'يتطلب تسجيل الدخول',
-      'notifications_login_message':
-          'يجب تسجيل الدخول لعرض الإشعارات!',
+      'notifications_login_message': 'يجب تسجيل الدخول لعرض الإشعارات!',
       'notifications_mark_all_read': 'تحديد الكل كمقروء',
       'notifications_empty_title': 'لا توجد إشعارات',
-      'notifications_empty_message':
-          'ستظهر هنا إشعارات الإنجازات والاختبارات!',
+      'notifications_empty_message': 'ستظهر هنا إشعارات الإنجازات والاختبارات!',
       'notifications_deleted': 'تم حذف الإشعار',
       'time_just_now': 'الآن',
       'time_minutes_ago': 'قبل {value} دقيقة',
@@ -747,8 +732,7 @@ class AppLocalizations {
       'leaderboard_error_title': 'حدث خطأ أثناء تحميل لوحة الصدارة',
       'leaderboard_retry': 'إعادة المحاولة',
       'leaderboard_empty_title': 'لا يوجد لاعبون في لوحة الصدارة بعد',
-      'leaderboard_empty_message':
-          'أكمل الاختبارات لكسب النقاط والظهور هنا!',
+      'leaderboard_empty_message': 'أكمل الاختبارات لكسب النقاط والظهور هنا!',
       'leaderboard_points_label': '{value} نقطة',
       'quiz_title': 'اختبار قلعة نزوى',
       'quiz_login_required_message':
@@ -805,16 +789,16 @@ class AppLocalizations {
       'manage_media_fill_required': 'يرجى إدخال اسم الوسائط والرابط.',
       'manage_media_delete_q': 'حذف هذه الوسائط؟',
       'manage_media_delete_msg': 'لا يمكن التراجع عن هذا الإجراء.',
+      'manage_media_qr_hint': 'امسح الرمز في التطبيق لتشغيل هذه الوسائط.',
+      'manage_media_qr_id': 'معرّف الوسائط',
       'admin_perm_manage_media': 'إدارة الوسائط',
       'admin_perm_can_manage_media': 'إضافة وحذف',
       'quiz_score_label': 'النتيجة: {value}',
       'quiz_completed_title': 'تم إنهاء الاختبار!',
-      'quiz_score_message_excellent':
-          'رائع! أنت خبير في قلعة نزوى! 🏆',
+      'quiz_score_message_excellent': 'رائع! أنت خبير في قلعة نزوى! 🏆',
       'quiz_score_message_very_good':
           'جيد جداً! لديك معرفة جيدة بقلعة نزوى! 👍',
-      'quiz_score_message_ok':
-          'ليس سيئاً! تعرّف أكثر على قلعة نزوى! 📚',
+      'quiz_score_message_ok': 'ليس سيئاً! تعرّف أكثر على قلعة نزوى! 📚',
       'quiz_score_message_try_again':
           'حاول مرة أخرى! اكتشف المزيد عن تراث عُمان! 🏰',
       // Register / create account
@@ -822,14 +806,11 @@ class AppLocalizations {
       'register_subtitle': 'انضم إلى رحلة استكشاف التراث',
       'register_username_label': 'اسم المستخدم / الاسم المعروض',
       'register_username_required': 'يرجى إدخال اسم المستخدم',
-      'register_username_min':
-          'يجب أن يكون اسم المستخدم 3 أحرف على الأقل',
+      'register_username_min': 'يجب أن يكون اسم المستخدم 3 أحرف على الأقل',
       'register_mobile_label': 'رقم الجوال',
       'register_mobile_required': 'لا يمكن أن يكون رقم الجوال فارغاً.',
-      'register_mobile_digits':
-          'يجب أن يحتوي رقم الجوال على أرقام فقط.',
-      'register_mobile_length':
-          'يجب أن يكون رقم الجوال 8 أرقام بالضبط',
+      'register_mobile_digits': 'يجب أن يحتوي رقم الجوال على أرقام فقط.',
+      'register_mobile_length': 'يجب أن يكون رقم الجوال 8 أرقام بالضبط',
       'register_email_label': 'البريد الإلكتروني',
       'register_email_required': 'لا يمكن أن يكون البريد الإلكتروني فارغاً.',
       'register_email_invalid':
@@ -839,20 +820,16 @@ class AppLocalizations {
       'register_visitor_foreign': 'زائر أجنبي',
       'register_password_label': 'كلمة المرور',
       'register_password_required': 'لا يمكن أن تكون كلمة المرور فارغة.',
-      'register_password_min':
-          'يجب أن تكون كلمة المرور 8 أحرف على الأقل.',
-      'register_password_pattern':
-          'يجب أن تحتوي كلمة المرور على حروف وأرقام.',
+      'register_password_min': 'يجب أن تكون كلمة المرور 8 أحرف على الأقل.',
+      'register_password_pattern': 'يجب أن تحتوي كلمة المرور على حروف وأرقام.',
       'register_confirm_password_label': 'تأكيد كلمة المرور',
       'register_confirm_password_required': 'لا يمكن أن يكون الحقل فارغاً',
-      'register_confirm_password_mismatch':
-          'كلمتا المرور غير متطابقتين',
+      'register_confirm_password_mismatch': 'كلمتا المرور غير متطابقتين',
       'register_button_creating': 'جاري إنشاء الحساب...',
       'register_button_create': 'إنشاء حساب',
       'register_have_account': 'لديك حساب بالفعل؟ ',
       'register_login': 'تسجيل الدخول',
-      'register_generic_error':
-          'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
+      'register_generic_error': 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
       // Map / QR
       'map_title': 'الخريطة',
       'map_find_location_button': 'اعثر على موقعك الحالي',
@@ -860,12 +837,12 @@ class AppLocalizations {
       'qr_title': 'QR قارئ',
       'qr_scan_again': 'امسح مرة أخرى',
       'qr_location_title': 'موقعك',
-      'default':'طبيعي',
-      '35-38_student_rooms':'38-35 غرف الطلاب',
-      '40-41_sitting_area':'41-40 منطقة جلوس',
-      '44-46_kitchen':'46-44 المطبخ',
-      '56_imam_room':'56 غرفة الإمام',
-      '58_walis_barza':'58 برزة الوالي',
+      'default': 'طبيعي',
+      '35-38_student_rooms': '38-35 غرف الطلاب',
+      '40-41_sitting_area': '41-40 منطقة جلوس',
+      '44-46_kitchen': '46-44 المطبخ',
+      '56_imam_room': '56 غرفة الإمام',
+      '58_walis_barza': '58 برزة الوالي',
       'qr_location_image_not_found': 'لم يتم العثور على صورة الموقع',
       'qr_no_location_image': 'لا توجد صورة للموقع',
       // Admin
@@ -1023,13 +1000,12 @@ class AppLocalizations {
       'forgot_password_failed_reset':
           'فشل إعادة تعيين كلمة المرور. يرجى المحاولة مرة أخرى.',
       //meida player
-      'video_player':'مشغل الفيديو',
-      'audio_player':'مشغل الصوت',
+      'video_player': 'مشغل الفيديو',
+      'audio_player': 'مشغل الصوت',
       //AI chatbot
-      'ai_chatbot':' مساعد الذكاء الاصطناعي',
-      'start_conversation':'!ابدأ محادثة',
-      'type_message':' ...اكتب رسالتك',
-
+      'ai_chatbot': ' مساعد الذكاء الاصطناعي',
+      'start_conversation': '!ابدأ محادثة',
+      'type_message': ' ...اكتب رسالتك',
     },
   };
 
@@ -1049,4 +1025,3 @@ class AppLocalizations {
   TextDirection get textDirection =>
       languageCode == 'ar' ? TextDirection.rtl : TextDirection.ltr;
 }
-

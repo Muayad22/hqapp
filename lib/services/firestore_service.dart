@@ -93,6 +93,7 @@ class FirestoreService {
   static const _pointsLeaderboardPath = 'leaderboard';
   static const _notificationsPath = 'notifications';
   static const _otpPath = 'passwordResetOTPs';
+
   /// Verified disabled-user messages for admins (push from login only after password check).
   ///
   /// Rules: allow `.write` for `push`/`set` under this path from the client if your
@@ -284,10 +285,7 @@ class FirestoreService {
       throw const AuthException('Invalid email or password.');
     }
 
-    return UserProfile.fromMap(
-      userId,
-      Map<String, dynamic>.from(userData),
-    );
+    return UserProfile.fromMap(userId, Map<String, dynamic>.from(userData));
   }
 
   static Future<UserProfile> login({
@@ -524,10 +522,9 @@ class FirestoreService {
     required String userId,
   }) async {
     await setAccountDisabled(userId: userId, disabled: false);
-    await _db
-        .child(_disabledAccountAppealsPath)
-        .child(appealId)
-        .update({'resolved': true});
+    await _db.child(_disabledAccountAppealsPath).child(appealId).update({
+      'resolved': true,
+    });
   }
 
   static Future<void> updateUser(UserProfile profile) {
@@ -795,9 +792,9 @@ class FirestoreService {
     if (userId.isEmpty || userId == 'guest') return [];
     try {
       final snapshot = await _aiChatMessagesRef(userId).get().timeout(
-            const Duration(seconds: 10),
-            onTimeout: () => throw Exception('Connection timeout'),
-          );
+        const Duration(seconds: 10),
+        onTimeout: () => throw Exception('Connection timeout'),
+      );
       if (!snapshot.exists) return [];
 
       final data = snapshot.value as Map<dynamic, dynamic>?;
@@ -1929,20 +1926,18 @@ class FirestoreService {
     required String category,
     required QuizQuestionEntry entry,
   }) async {
-    await _quizCategoryRef(category)
-        .child('questions')
-        .child(entry.id)
-        .update(entry.toMap());
+    await _quizCategoryRef(
+      category,
+    ).child('questions').child(entry.id).update(entry.toMap());
   }
 
   static Future<void> deleteQuizQuestion({
     required String category,
     required String questionId,
   }) async {
-    await _quizCategoryRef(category)
-        .child('questions')
-        .child(questionId)
-        .remove();
+    await _quizCategoryRef(
+      category,
+    ).child('questions').child(questionId).remove();
   }
 
   static DatabaseReference get _mediaContentRef => _db.child(_mediaContentPath);
@@ -1973,11 +1968,7 @@ class FirestoreService {
   static Future<String> addMediaItem({required MediaEntry entry}) async {
     final ref = _mediaContentRef.push();
     final id = ref.key!;
-    await ref.set({
-      'id': id,
-      'name': entry.name,
-      'url': entry.url,
-    });
+    await ref.set({'id': id, 'name': entry.name, 'url': entry.url});
     return id;
   }
 
@@ -2004,5 +1995,4 @@ class FirestoreService {
 
     return data[mediaId]['name'];
   }
-
 }
