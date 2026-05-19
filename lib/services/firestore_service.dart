@@ -1988,4 +1988,21 @@ class FirestoreService {
   static Future<void> deleteMediaItem({required String mediaId}) async {
     await _mediaContentRef.child(mediaId).remove();
   }
+
+  static Future<String> fetchMediaUrl(mediaId) async {
+    final snap = await _mediaContentRef.get();
+
+    Map<dynamic, dynamic> data = snap.value as Map<dynamic, dynamic>;
+
+    return data[mediaId]['url'];
+  }
+
+  static Future<String> fetchMediaName(mediaId) async {
+    final snap = await _mediaContentRef.get();
+
+    Map<dynamic, dynamic> data = snap.value as Map<dynamic, dynamic>;
+
+    return data[mediaId]['name'];
+  }
+
 }

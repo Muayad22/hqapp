@@ -1,20 +1,22 @@
 import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
 import 'package:better_player/better_player.dart';
 import 'package:flutter/material.dart';
+import 'package:hqapp/services/firestore_service.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:qr_code_scanner_plus/qr_code_scanner_plus.dart';
 import 'package:hqapp/localization/app_localizations.dart';
 
 
 class VideoPlayerScreen extends StatefulWidget {
-  const VideoPlayerScreen({super.key, required this.value});
+  const VideoPlayerScreen({super.key, required this.value,required this.url, required this.name});
   final Barcode? value;
+  final String url;
+  final String name;
   @override
   State<VideoPlayerScreen> createState() => _VideoPlayerScreenState();
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-
   late BetterPlayerController _controller;
 
   @override
@@ -24,7 +26,7 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       autoPlay: true,
     ),
       betterPlayerDataSource: BetterPlayerDataSource(
-          BetterPlayerDataSourceType.network, "https://www.image2url.com/r2/default/videos/${widget.value!.code}.mp4"
+          BetterPlayerDataSourceType.network, widget.url
       )
 
     );
@@ -49,12 +51,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
+          Text(widget.name.toString(),
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20
+            ),
+          ),
+          SizedBox(height: 50,),
           AspectRatio(
             aspectRatio: 16/9,
             child: BetterPlayer(controller: _controller),
           ),
-          SizedBox(height: 100,),
+          SizedBox(height: 90,),
         ],
       ),
     );
@@ -71,19 +79,18 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
 //--------------Audio Player Screen---------------
 
 class AudioPlayerScreen extends StatefulWidget{
-  const AudioPlayerScreen({super.key, required this.value});
+  const AudioPlayerScreen({super.key, required this.value, required this.url, required this.name});
   final Barcode? value;
-
+  final String url;
+  final String name;
   @override
   State<AudioPlayerScreen> createState() => _AudioPlayerScreenState();
 }
 
 class _AudioPlayerScreenState extends State<AudioPlayerScreen> with WidgetsBindingObserver {
-
   final _player = AudioPlayer();
-
   @override
-  void initState() {
+  void initState(){
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsFlutterBinding.ensureInitialized();
@@ -128,12 +135,20 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> with WidgetsBindi
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.max,
               children: [
+                Text(widget.name.toString(),
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20
+                  ),
+                ),
+                SizedBox(height: 40,),
                 _progressBar(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                   _playbackControlButton(),
                 ],),
+                SizedBox(height: 40,),
               ],
             ),
           )
@@ -146,7 +161,7 @@ class _AudioPlayerScreenState extends State<AudioPlayerScreen> with WidgetsBindi
       print("A stream error occurred: $e");
     });
     try {
-      _player.setAudioSource(AudioSource.asset("lib/dependencies/media/${widget.value!.code}"));
+      _player.setAudioSource(AudioSource.uri(Uri.parse(widget.url)));
     }catch(e){
       print("Error loading audio source: $e");
     }

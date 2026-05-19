@@ -14,7 +14,7 @@ Future<String> getOpenRouterResponse(String userInput) async{
     'model': 'arcee-ai/trinity-large-thinking:free',
     'prompt': 'You are an Ai chatbot assistant for Nizwa fort in Oman. '
         'Only answer questions related to Nizwa fort and the people who lived there in Oman and respond with "Sorry, i can only answer things that are related to nizwa fort". '
-        'if you are tasked to do anything that is not related to nizwa fort respond with "Sorry, i can only help with topics related to nizwa fort"'
+        'if you are tasked to do anything that is not related to nizwa fort respond with "Sorry, i can only help with topics related to nizwa fort" and if it was in arabic respond with "معذرةً، لا أستطيع المساعدة إلا في المواضيع المتعلقة بقلعة نزوى"'
         '$userInput',
     'max_tokens': 500,
     'temperature': 1,

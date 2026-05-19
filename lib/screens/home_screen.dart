@@ -1259,32 +1259,31 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onQRViewCreated(QRViewController controller) {
     this.controller = controller;
     controller.scannedDataStream.listen((scanData) {
-      setState(() {
+      setState(() async {
         result = scanData;
-        bool? isMP3 = result?.code?.contains('.mp3');
+        final code = result?.code ?? '';
+        //fetch URL from Database
+        String recUrl = await FirestoreService.fetchMediaUrl(code.toString()).then((String rec){return rec;});
+        late String url = recUrl;
+        //fetch Name from Database
+        String recName = await FirestoreService.fetchMediaName(code.toString()).then((String rec){return rec;});
+        late String name = recName;
         if (!screenOpen && result?.code != null) {
-          final code = result?.code ?? '';
-          final bool isMP4 = code.contains('.mp4');
-          if (isMP3 != null && isMP3) {
+          bool isMP3 = url.contains('.mp3');
+          bool isMP4 = url.contains('.mp4');
+          print(url);
+          if (isMP3) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => AudioPlayerScreen(value: result),
+                builder: (context) => AudioPlayerScreen(value: result,url: url,name: name),
               ),
             );
-          } else if (isMP4) {
+          } else if(isMP4) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => VideoPlayerScreen(value: result),
-              ),
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) =>
-                    FoundCodeScreen(value: result, scanningUser: _user),
+                builder: (context) => VideoPlayerScreen(value: result,url: url,name: name),
               ),
             );
           }
